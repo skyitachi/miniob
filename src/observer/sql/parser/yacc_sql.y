@@ -102,6 +102,8 @@ ParserContext *get_context(yyscan_t scanner)
         LE
         GE
         NE
+        BY
+        GROUP
 
 %union {
   struct _Attr *attr;
@@ -335,7 +337,8 @@ update:			/*  update 语句的语法解析树*/
 		}
     ;
 select:				/*  select 语句的语法解析树*/
-    SELECT select_attr FROM ID rel_list where SEMICOLON
+    // SELECT select_attr FROM ID rel_list where GROUP BY group_attr SEMICOLON
+    SELECT select_attr FROM ID rel_list where group_by SEMICOLON
 		{
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
 			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
@@ -370,6 +373,43 @@ select_attr:
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
     ;
+
+group_by:
+    /* empty */
+    | GROUP BY group_attr {
+
+        }
+    ;
+group_attr:
+    ID group_attr_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $1);
+			group_by_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+       }
+    | ID DOT ID group_attr_list {
+			RelAttr attr;
+			relation_attr_init(&attr, $1, $3);
+			group_by_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+       }
+    ;
+
+group_attr_list:
+    /* empty */
+    | COMMA ID group_attr_list {
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, $2);
+			group_by_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+     	  // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length].relation_name = NULL;
+        // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length++].attribute_name=$2;
+      }
+    | COMMA ID DOT ID group_attr_list {
+			RelAttr attr;
+			relation_attr_init(&attr, $2, $4);
+			group_by_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+        // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length].attribute_name=$4;
+        // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length++].relation_name=$2;
+  	  }
+  	;
 attr_list:
     /* empty */
     | COMMA ID attr_list {
@@ -387,7 +427,6 @@ attr_list:
         // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length++].relation_name=$2;
   	  }
   	;
-
 rel_list:
     /* empty */
     | COMMA ID rel_list {	

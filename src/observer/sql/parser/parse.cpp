@@ -111,7 +111,12 @@ void attr_info_destroy(AttrInfo *attr_info)
 void selects_init(Selects *selects, ...);
 void selects_append_attribute(Selects *selects, RelAttr *rel_attr)
 {
+//  printf("in the selects_append_attributes");
   selects->attributes[selects->attr_num++] = *rel_attr;
+}
+void group_by_append_attribute(Selects* selects, RelAttr *rel_attr) {
+  LOG_INFO("in the group by attributes %s, %s", rel_attr->relation_name, rel_attr->attribute_name);
+  selects->group_by_attrs[selects->group_attr_num++] = *rel_attr;
 }
 void selects_append_relation(Selects *selects, const char *relation_name)
 {
