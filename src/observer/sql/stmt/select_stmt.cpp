@@ -124,6 +124,42 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
 
   LOG_INFO("got %d tables in from stmt and %d fields in query stmt", tables.size(), query_fields.size());
 
+
+  // TODO: group by 有很多规则
+  std::vector<Field> group_by_fields;
+  for (int i = select_sql.group_attr_num - 1; i >= 0; i++) {
+    const RelAttr& group_attr = select_sql.group_by_attrs[i];
+    const char *field_name = group_attr.attribute_name;
+    const char *table_name = group_attr.relation_name;
+    if (strcmp(field_name, "*") == 0) {
+      return RC::SCHEMA_GROUP_BY_NAME_ILLEGAL;
+    }
+    // select from t1, t2 group id, name; should be error
+    if (common::is_blank(table_name) && tables.size() > 1) {
+      LOG_WARN("multiple table should include table name in group by field");
+      return RC::SCHEMA_FIELD_MISSING;
+    }
+    if (!common::is_blank(table_name) && strcmp(table_name, "*") == 0) {
+      LOG_WARN("no * in group by");
+      return RC::SCHEMA_TABLE_NAME_ILLEGAL;
+    }
+    auto iter = table_map.find(table_name);
+    if (iter == table_map.end()) {
+      LOG_WARN("no such table in group list: %s", table_name);
+      return RC::SCHEMA_FIELD_MISSING;
+    }
+    Table *table = iter->second;
+    const FieldMeta* field_meta = table->table_meta().field(field_name);
+    if (nullptr == field_meta) {
+      LOG_WARN("no such field. field=%s.%s.%s", db->name(), table->name(), field_name);
+      return RC::SCHEMA_FIELD_MISSING;
+    }
+    if (common::is_blank(table_name)) {
+      group_by_fields.push_back(Field(*tables.begin(), field_meta));
+    } else {
+      group_by_fields.push_back(Field(table, field_meta));
+    }
+  }
   Table *default_table = nullptr;
   if (tables.size() == 1) {
     default_table = tables[0];
@@ -142,6 +178,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   SelectStmt *select_stmt = new SelectStmt();
   select_stmt->tables_.swap(tables);
   select_stmt->query_fields_.swap(query_fields);
+  select_stmt->group_by_fields_.swap(group_by_fields);
   select_stmt->filter_stmt_ = filter_stmt;
   stmt = select_stmt;
   return RC::SUCCESS;
