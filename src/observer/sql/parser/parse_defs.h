@@ -48,6 +48,14 @@ typedef enum
   FLOATS
 } AttrType;
 
+enum class AggrType {
+  NOAGGR,
+  COUNT,
+  MIN,
+  MAX,
+  AVG
+};
+
 //属性值
 typedef struct _Value {
   AttrType type;  // type of value

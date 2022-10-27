@@ -47,7 +47,7 @@ AttrType attr_type_from_string(const char *s)
 FieldMeta::FieldMeta() : attr_type_(AttrType::UNDEFINED), attr_offset_(-1), attr_len_(0), visible_(false)
 {}
 
-RC FieldMeta::init(const char *name, AttrType attr_type, int attr_offset, int attr_len, bool visible)
+RC FieldMeta::init(const char *name, AttrType attr_type, int attr_offset, int attr_len, bool visible, AggrType aggr_type)
 {
   if (common::is_blank(name)) {
     LOG_WARN("Name cannot be empty");
@@ -65,6 +65,7 @@ RC FieldMeta::init(const char *name, AttrType attr_type, int attr_offset, int at
   attr_len_ = attr_len;
   attr_offset_ = attr_offset;
   visible_ = visible;
+  aggr_type_ = aggr_type;
 
   LOG_INFO("Init a field with name=%s", name);
   return RC::SUCCESS;
@@ -78,6 +79,10 @@ const char *FieldMeta::name() const
 AttrType FieldMeta::type() const
 {
   return attr_type_;
+}
+
+AggrType FieldMeta::aggr_type() const {
+  return aggr_type_;
 }
 
 int FieldMeta::offset() const
