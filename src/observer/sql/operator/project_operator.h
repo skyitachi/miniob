@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include "sql/aggregate/aggr_func.h"
 #include "sql/operator/operator.h"
 #include "rc.h"
 
@@ -26,6 +27,7 @@ public:
   virtual ~ProjectOperator() = default;
 
   void add_projection(const Table *table, const FieldMeta *field);
+  void add_aggr_func(AggrFunc* aggr_func);
 
   RC open() override;
   RC next() override;
@@ -41,4 +43,7 @@ public:
   Tuple * current_tuple() override;
 private:
   ProjectTuple tuple_;
+
+  std::vector<AggrFunc*> aggr_funcs;
+
 };

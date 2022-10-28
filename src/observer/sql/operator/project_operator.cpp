@@ -36,7 +36,13 @@ RC ProjectOperator::open()
 
 RC ProjectOperator::next()
 {
-  return children_[0]->next();
+  if (aggr_funcs.empty()) {
+    return children_[0]->next();
+  }
+  std::vector<Tuple* > tuples;
+  while(children_[0]->next() == SUCCESS) {
+    tuples.push_back(children_[0]->current_tuple());
+  }
 }
 
 RC ProjectOperator::close()
@@ -46,8 +52,11 @@ RC ProjectOperator::close()
 }
 Tuple *ProjectOperator::current_tuple()
 {
-  tuple_.set_tuple(children_[0]->current_tuple());
-  return &tuple_;
+  if (aggr_funcs.empty()) {
+    tuple_.set_tuple(children_[0]->current_tuple());
+    return &tuple_;
+  }
+  // TODO: 算好的值
 }
 
 void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_meta)
@@ -57,6 +66,11 @@ void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_
   TupleCellSpec *spec = new TupleCellSpec(new FieldExpr(table, field_meta));
   spec->set_alias(field_meta->name());
   tuple_.add_cell_spec(spec);
+}
+
+void ProjectOperator::add_aggr_func(AggrFunc *aggr_func)
+{
+  aggr_funcs.push_back(aggr_func);
 }
 
 RC ProjectOperator::tuple_cell_spec_at(int index, const TupleCellSpec *&spec) const
