@@ -43,7 +43,11 @@ public:
   Tuple * current_tuple() override;
 private:
   ProjectTuple tuple_;
-
   std::vector<AggrFunc*> aggr_funcs;
+  std::vector<TupleCell*> aggr_values_;
+  bool aggregated_ = false;
+
+
+  RC make_default_value(AttrType attr_type, char *&dest);
 
 };

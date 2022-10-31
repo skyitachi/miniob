@@ -40,8 +40,20 @@ RC ProjectOperator::next()
     return children_[0]->next();
   }
   std::vector<Tuple* > tuples;
+  std::vector<TupleCell> aggr_values;
   while(children_[0]->next() == SUCCESS) {
-    tuples.push_back(children_[0]->current_tuple());
+    tuple_.set_tuple(children_[0]->current_tuple());
+    TupleCell tc;
+    for(int i = 0; i < tuple_.cell_num(); i++) {
+      if (tuple_.cell_at(i, tc) != RC::SUCCESS) {
+        // NOTE: error code
+        return RC::SCHEMA_FIELD_MISSING;
+      }
+    }
+
+
+
+//    tuples.push_back(children_[0]->current_tuple());
   }
 }
 
@@ -50,6 +62,7 @@ RC ProjectOperator::close()
   children_[0]->close();
   return RC::SUCCESS;
 }
+
 Tuple *ProjectOperator::current_tuple()
 {
   if (aggr_funcs.empty()) {
@@ -71,9 +84,35 @@ void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_
 void ProjectOperator::add_aggr_func(AggrFunc *aggr_func)
 {
   aggr_funcs.push_back(aggr_func);
+  auto *aggr_meta = aggr_func->aggr_meta();
+  char* default_value;
+  make_default_value(aggr_meta->type(), default_value);
+  TupleCell* tc = new TupleCell(aggr_meta, default_value);
+  aggr_values_.push_back(tc);
 }
 
 RC ProjectOperator::tuple_cell_spec_at(int index, const TupleCellSpec *&spec) const
 {
   return tuple_.cell_spec_at(index, spec);
+}
+
+RC ProjectOperator::make_default_value(AttrType attr_type, char *&dest)
+{
+  switch (attr_type) {
+    case INTS: {
+      dest = new char[4];
+      int32_t value = 0;
+      memcpy(dest, &value, 4);
+      break;
+    }
+    case FLOATS: {
+      dest = new char[4];
+      float value = 0.0f;
+      memcpy(dest, &value, 4);
+      break;
+    }
+    default:
+      return RC::UNIMPLENMENT;
+  }
+  return RC::SUCCESS;
 }
