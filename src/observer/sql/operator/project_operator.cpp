@@ -39,22 +39,25 @@ RC ProjectOperator::next()
   if (aggr_funcs.empty()) {
     return children_[0]->next();
   }
-  std::vector<Tuple* > tuples;
-  std::vector<TupleCell> aggr_values;
-  while(children_[0]->next() == SUCCESS) {
-    tuple_.set_tuple(children_[0]->current_tuple());
-    TupleCell tc;
-    for(int i = 0; i < tuple_.cell_num(); i++) {
-      if (tuple_.cell_at(i, tc) != RC::SUCCESS) {
-        // NOTE: error code
-        return RC::SCHEMA_FIELD_MISSING;
-      }
-    }
-
-
-
-//    tuples.push_back(children_[0]->current_tuple());
+  if (aggregated_) {
+    return RC::GENERIC_ERROR;
   }
+  while(children_[0]->next() == SUCCESS) {
+    auto* tuple = children_[0]->current_tuple();
+    for(auto* aggr_func: aggr_funcs) {
+      TupleCell input;
+      auto rc = tuple->find_cell(*aggr_func->aggr_field(), input);
+      if (rc != RC::SUCCESS) {
+        LOG_ERROR("cannot found field info in tuple");
+        return rc;
+      }
+      aggr_func->fetch(input);
+    }
+  }
+  for(auto* aggr_func: aggr_funcs) {
+    aggr_func->end();
+  }
+  aggregated_ = true;
 }
 
 RC ProjectOperator::close()
@@ -69,7 +72,14 @@ Tuple *ProjectOperator::current_tuple()
     tuple_.set_tuple(children_[0]->current_tuple());
     return &tuple_;
   }
-  // TODO: 算好的值
+
+  std::vector<TupleCell> value_cells;
+  for(auto* aggr_func: aggr_funcs) {
+    value_cells.push_back(aggr_func->value());
+  }
+  AggrTuple* aggr_tuple = new AggrTuple(value_cells);
+  tuple_.set_tuple(aggr_tuple);
+  return &tuple_;
 }
 
 void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_meta)

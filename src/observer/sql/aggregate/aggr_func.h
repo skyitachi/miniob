@@ -16,17 +16,28 @@ enum class AggrFuncType {
   MAX,
   AVG
 };
+
 class AggrFunc {
 public:
-  AggrFunc(FieldMeta* fm, AggrFuncType aggr_func_type): aggr_meta_(fm), aggr_func_type_(aggr_func_type) {}
+  AggrFunc(Field* field, AggrFuncType aggr_func_type): field_(field), aggr_func_type_(aggr_func_type) {}
   RC eval(const TupleCell& input, TupleCell& output);
-  FieldMeta* aggr_meta() {
-    return aggr_meta_;
+  RC fetch(const TupleCell& input);
+  void end();
+  const FieldMeta* aggr_meta() {
+    return field_->meta();
+  }
+  const Field* aggr_field() {
+    return field_;
+  }
+  TupleCell value() {
+    return value_;
   }
 
 private:
   AggrFuncType aggr_func_type_;
-  FieldMeta* aggr_meta_;
+  Field* field_;
+  TupleCell value_;
+  int count_;
 };
 
 #endif  // MINIDB_AGGREGATE_FUNC_H

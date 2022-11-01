@@ -131,7 +131,7 @@ public:
       const FieldExpr * field_expr = (const FieldExpr *)speces_[i]->expression();
       const Field &field = field_expr->field();
       if (0 == strcmp(field_name, field.field_name())) {
-	return cell_at(i, cell);
+	    return cell_at(i, cell);
       }
     }
     return RC::NOTFOUND;
@@ -228,4 +228,37 @@ public:
 private:
   std::vector<TupleCellSpec *> speces_;
   Tuple *tuple_ = nullptr;
+};
+
+class AggrTuple: public Tuple {
+public:
+  AggrTuple() = default;
+  AggrTuple(std::vector<TupleCell> cells): cells_(cells) {}
+
+  virtual ~AggrTuple() {
+  }
+
+  int cell_num() const override {
+    return cells_.size();
+  }
+
+  RC cell_at(int index, TupleCell& cell) const override {
+    if (index >= cells_.size()) {
+      return RC::INVALID_ARGUMENT;
+    }
+    cell.set_data(cells_[index].data());
+    cell.set_length(cells_[index].length());
+    cell.set_type(cells_[index].attr_type());
+    return RC::SUCCESS;
+  }
+
+  RC find_cell(const Field& field, TupleCell& cell) const override {
+    return RC::GENERIC_ERROR;
+  }
+
+  RC cell_spec_at(int index, const TupleCellSpec *&spec) const override {
+    return RC::GENERIC_ERROR;
+  }
+private:
+  std::vector<TupleCell> cells_;
 };
