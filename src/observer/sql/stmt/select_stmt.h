@@ -24,6 +24,7 @@ class FieldMeta;
 class FilterStmt;
 class Db;
 class Table;
+class AggrFunc;
 
 class SelectStmt : public Stmt
 {
@@ -44,6 +45,7 @@ public:
 private:
   std::vector<Field> query_fields_;
   std::vector<Table *> tables_;
+  std::vector<AggrFunc*> aggr_func_;
   FilterStmt *filter_stmt_ = nullptr;
 };
 

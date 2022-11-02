@@ -29,6 +29,11 @@ typedef struct {
   char *attribute_name;  // attribute name              属性名
 } RelAttr;
 
+typedef struct {
+  char *func_name;
+  RelAttr rel_attr;
+} AggrAttr;
+
 typedef enum {
   EQUAL_TO,     //"="     0
   LESS_EQUAL,   //"<="    1
@@ -74,6 +79,8 @@ typedef struct {
   char *relations[MAX_NUM];       // relations in From clause
   size_t condition_num;           // Length of conditions in Where clause
   Condition conditions[MAX_NUM];  // conditions in Where clause
+  AggrAttr aggrs[MAX_NUM];
+  size_t aggr_num;
 } Selects;
 
 // struct of insert

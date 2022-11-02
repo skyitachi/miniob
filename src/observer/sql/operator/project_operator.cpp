@@ -97,7 +97,7 @@ void ProjectOperator::add_aggr_func(AggrFunc *aggr_func)
   auto *aggr_meta = aggr_func->aggr_meta();
   char* default_value;
   make_default_value(aggr_meta->type(), default_value);
-  TupleCell* tc = new TupleCell(aggr_meta, default_value);
+  TupleCell* tc = new TupleCell(const_cast<FieldMeta*>(aggr_meta), default_value);
   aggr_values_.push_back(tc);
 }
 

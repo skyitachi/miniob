@@ -32,6 +32,13 @@ void relation_attr_init(RelAttr *relation_attr, const char *relation_name, const
   relation_attr->attribute_name = strdup(attribute_name);
 }
 
+void aggr_attr_init(AggrAttr *aggr_attr, RelAttr relation_attr, const char* func_name) {
+  if (func_name != nullptr) {
+    aggr_attr->func_name = strdup(func_name);
+  }
+  aggr_attr->rel_attr = relation_attr;
+}
+
 void relation_attr_destroy(RelAttr *relation_attr)
 {
   free(relation_attr->relation_name);
