@@ -120,6 +120,7 @@ ParserContext *get_context(yyscan_t scanner)
 %token <string> SSS
 %token <string> STAR
 %token <string> STRING_V
+%token <string> COUNT
 //非终结符
 
 %type <number> type;
@@ -373,15 +374,17 @@ select_attr:
 	        AggrAttr aggr;
 	        RelAttr attr;
 	        relation_attr_init(&attr, NULL, $3);
-	        aggr_attr_init(&aggr, attr, "count");
+	        aggr_attr_init(&aggr, &attr, "count");
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
 	    }
 	| COUNT LBRACE ID DOT ID RBRACE attr_list {
 	        AggrAttr aggr;
 	        RelAttr attr;
 	        relation_attr_init(&attr, $3, $5);
-	        aggr_attr_init(&aggr, attr, "count");
+	        aggr_attr_init(&aggr, &attr, "count");
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
 	  }
     ;
 attr_list:
@@ -404,15 +407,17 @@ attr_list:
 	        AggrAttr aggr;
 	        RelAttr attr;
 	        relation_attr_init(&attr, NULL, $4);
-	        aggr_attr_init(&aggr, attr, "count");
+	        aggr_attr_init(&aggr, &attr, "count");
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
   	  }
   	| COMMA COUNT LBRACE ID DOT ID RBRACE attr_list {
 	        AggrAttr aggr;
 	        RelAttr attr;
 	        relation_attr_init(&attr, $4, $6);
-	        aggr_attr_init(&aggr, attr, "count");
+	        aggr_attr_init(&aggr, &attr, "count");
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
   	  }
   	;
 

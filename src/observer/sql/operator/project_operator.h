@@ -27,7 +27,7 @@ public:
   virtual ~ProjectOperator() = default;
 
   void add_projection(const Table *table, const FieldMeta *field);
-  void add_aggr_func(AggrFunc* aggr_func);
+  void add_aggr_func(AggrFunc aggr_func);
 
   RC open() override;
   RC next() override;
@@ -43,7 +43,7 @@ public:
   Tuple * current_tuple() override;
 private:
   ProjectTuple tuple_;
-  std::vector<AggrFunc*> aggr_funcs;
+  std::vector<AggrFunc> aggr_funcs;
   std::vector<TupleCell*> aggr_values_;
   bool aggregated_ = false;
 

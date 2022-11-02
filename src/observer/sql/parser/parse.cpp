@@ -32,19 +32,25 @@ void relation_attr_init(RelAttr *relation_attr, const char *relation_name, const
   relation_attr->attribute_name = strdup(attribute_name);
 }
 
-void aggr_attr_init(AggrAttr *aggr_attr, RelAttr relation_attr, const char* func_name) {
-  if (func_name != nullptr) {
-    aggr_attr->func_name = strdup(func_name);
-  }
-  aggr_attr->rel_attr = relation_attr;
-}
-
 void relation_attr_destroy(RelAttr *relation_attr)
 {
   free(relation_attr->relation_name);
   free(relation_attr->attribute_name);
   relation_attr->relation_name = nullptr;
   relation_attr->attribute_name = nullptr;
+}
+
+void aggr_attr_init(AggrAttr *aggr_attr, RelAttr* relation_attr, const char* func_name) {
+  if (func_name != nullptr) {
+    aggr_attr->func_name = strdup(func_name);
+  }
+  printf("aggr_attr->func_name: %s, raw func_name: %s\n", aggr_attr->func_name, func_name);
+  aggr_attr->rel_attr = relation_attr;
+}
+
+void aggr_attr_destroy(AggrAttr *aggr_attr) {
+  free(aggr_attr->func_name);
+  aggr_attr->rel_attr = nullptr;
 }
 
 void value_init_integer(Value *value, int v)
@@ -123,6 +129,11 @@ void selects_append_attribute(Selects *selects, RelAttr *rel_attr)
 void selects_append_relation(Selects *selects, const char *relation_name)
 {
   selects->relations[selects->relation_num++] = strdup(relation_name);
+}
+
+void selects_append_aggr(Selects* selects, AggrAttr *aggr_attr) {
+  selects->aggrs[selects->aggr_num++] = *aggr_attr;
+  printf("in select_append_aggr func: %d\n", selects->aggr_num);
 }
 
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num)

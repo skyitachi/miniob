@@ -31,7 +31,7 @@ typedef struct {
 
 typedef struct {
   char *func_name;
-  RelAttr rel_attr;
+  RelAttr* rel_attr;
 } AggrAttr;
 
 typedef enum {
@@ -194,6 +194,9 @@ extern "C" {
 void relation_attr_init(RelAttr *relation_attr, const char *relation_name, const char *attribute_name);
 void relation_attr_destroy(RelAttr *relation_attr);
 
+void aggr_attr_init(AggrAttr *aggr_attr, RelAttr* relation_attr, const char* func_name);
+void aggr_attr_destroy(AggrAttr *aggr_attr);
+
 void value_init_integer(Value *value, int v);
 void value_init_float(Value *value, float v);
 void value_init_string(Value *value, const char *v);
@@ -211,6 +214,8 @@ void selects_append_attribute(Selects *selects, RelAttr *rel_attr);
 void selects_append_relation(Selects *selects, const char *relation_name);
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num);
 void selects_destroy(Selects *selects);
+
+void selects_append_aggr(Selects *selects, AggrAttr* aggr_attr);
 
 void inserts_init(Inserts *inserts, const char *relation_name, Value values[], size_t value_num);
 void inserts_destroy(Inserts *inserts);

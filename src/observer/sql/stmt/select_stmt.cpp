@@ -124,6 +124,17 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
 
   LOG_INFO("got %d tables in from stmt and %d fields in query stmt", tables.size(), query_fields.size());
 
+  std::vector<AggrFunc> aggr_funcs;
+  LOG_DEBUG("[select_stmt] got aggr_func count: %d", select_sql.aggr_num);
+  for (int i = 0; i < select_sql.aggr_num; i++) {
+    auto aggr_attr = select_sql.aggrs[i];
+    LOG_DEBUG("[select_stmt] got aggr_func: %s", aggr_attr.func_name);
+    if (0 == strcmp(aggr_attr.func_name, "count")) {
+      aggr_funcs.emplace_back(query_fields[i], AggrFuncType::COUNT);
+    }
+  }
+
+
   Table *default_table = nullptr;
   if (tables.size() == 1) {
     default_table = tables[0];
@@ -143,6 +154,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   select_stmt->tables_.swap(tables);
   select_stmt->query_fields_.swap(query_fields);
   select_stmt->filter_stmt_ = filter_stmt;
+  select_stmt->aggr_func_.swap(aggr_funcs);
   stmt = select_stmt;
   return RC::SUCCESS;
 }

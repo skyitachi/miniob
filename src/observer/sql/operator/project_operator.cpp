@@ -44,18 +44,18 @@ RC ProjectOperator::next()
   }
   while(children_[0]->next() == SUCCESS) {
     auto* tuple = children_[0]->current_tuple();
-    for(auto* aggr_func: aggr_funcs) {
+    for(auto& aggr_func: aggr_funcs) {
       TupleCell input;
-      auto rc = tuple->find_cell(*aggr_func->aggr_field(), input);
+      auto rc = tuple->find_cell(*aggr_func.aggr_field(), input);
       if (rc != RC::SUCCESS) {
         LOG_ERROR("cannot found field info in tuple");
         return rc;
       }
-      aggr_func->fetch(input);
+      aggr_func.fetch(input);
     }
   }
-  for(auto* aggr_func: aggr_funcs) {
-    aggr_func->end();
+  for(auto& aggr_func: aggr_funcs) {
+    aggr_func.end();
   }
   aggregated_ = true;
 }
@@ -74,8 +74,8 @@ Tuple *ProjectOperator::current_tuple()
   }
 
   std::vector<TupleCell> value_cells;
-  for(auto* aggr_func: aggr_funcs) {
-    value_cells.push_back(aggr_func->value());
+  for(auto& aggr_func: aggr_funcs) {
+    value_cells.push_back(aggr_func.value());
   }
   AggrTuple* aggr_tuple = new AggrTuple(value_cells);
   tuple_.set_tuple(aggr_tuple);
@@ -91,14 +91,14 @@ void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_
   tuple_.add_cell_spec(spec);
 }
 
-void ProjectOperator::add_aggr_func(AggrFunc *aggr_func)
+void ProjectOperator::add_aggr_func(AggrFunc aggr_func)
 {
   aggr_funcs.push_back(aggr_func);
-  auto *aggr_meta = aggr_func->aggr_meta();
-  char* default_value;
-  make_default_value(aggr_meta->type(), default_value);
-  TupleCell* tc = new TupleCell(const_cast<FieldMeta*>(aggr_meta), default_value);
-  aggr_values_.push_back(tc);
+//  auto *aggr_meta = aggr_func.aggr_meta();
+//  char** default_value;
+//  make_default_value(aggr_meta->type(), *default_value);
+//  TupleCell* tc = new TupleCell(const_cast<FieldMeta*>(aggr_meta), *default_value);
+//  aggr_values_.push_back(tc);
 }
 
 RC ProjectOperator::tuple_cell_spec_at(int index, const TupleCellSpec *&spec) const

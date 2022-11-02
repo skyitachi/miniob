@@ -416,6 +416,9 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   for (const Field &field : select_stmt->query_fields()) {
     project_oper.add_projection(field.table(), field.meta());
   }
+  for (const AggrFunc& aggr_func: select_stmt->aggr_funcs()) {
+    project_oper.add_aggr_func(aggr_func);
+  }
   rc = project_oper.open();
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to open operator");
