@@ -40,7 +40,7 @@ RC ProjectOperator::next()
     return children_[0]->next();
   }
   if (aggregated_) {
-    return RC::GENERIC_ERROR;
+    return RC::RECORD_EOF;
   }
   while(children_[0]->next() == SUCCESS) {
     LOG_DEBUG("in the aggr func loop");
@@ -60,6 +60,7 @@ RC ProjectOperator::next()
     aggr_func.end();
   }
   aggregated_ = true;
+  return RC::SUCCESS;
 }
 
 RC ProjectOperator::close()
@@ -80,11 +81,8 @@ Tuple *ProjectOperator::current_tuple()
   for(auto& aggr_func: aggr_funcs) {
     value_cells.push_back(aggr_func.value());
   }
-  LOG_DEBUG("before new AggrTuple");
-  AggrTuple* aggr_tuple = new AggrTuple(std::move(value_cells));
-  LOG_DEBUG("after new AggrTuple");
-  tuple_.set_tuple(aggr_tuple);
-  return &tuple_;
+  aggr_tuple_ = AggrTuple(std::move(value_cells));
+  return &aggr_tuple_;
 }
 
 void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_meta)

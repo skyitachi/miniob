@@ -43,6 +43,7 @@ public:
   Tuple * current_tuple() override;
 private:
   ProjectTuple tuple_;
+  AggrTuple aggr_tuple_;
   std::vector<AggrFunc> aggr_funcs;
   std::vector<TupleCell*> aggr_values_;
   bool aggregated_ = false;
