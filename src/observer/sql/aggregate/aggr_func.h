@@ -29,7 +29,7 @@ public:
   const Field* aggr_field() {
     return &field_;
   }
-  TupleCell value() {
+  const TupleCell& value() {
     return value_;
   }
 

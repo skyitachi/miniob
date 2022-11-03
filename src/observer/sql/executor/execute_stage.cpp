@@ -416,6 +416,7 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   for (const Field &field : select_stmt->query_fields()) {
     project_oper.add_projection(field.table(), field.meta());
   }
+  LOG_DEBUG("before add project_oper add aggr_func");
   for (const AggrFunc& aggr_func: select_stmt->aggr_funcs()) {
     project_oper.add_aggr_func(aggr_func);
   }

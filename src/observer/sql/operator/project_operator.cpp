@@ -43,6 +43,7 @@ RC ProjectOperator::next()
     return RC::GENERIC_ERROR;
   }
   while(children_[0]->next() == SUCCESS) {
+    LOG_DEBUG("in the aggr func loop");
     auto* tuple = children_[0]->current_tuple();
     for(auto& aggr_func: aggr_funcs) {
       TupleCell input;
@@ -53,6 +54,7 @@ RC ProjectOperator::next()
       }
       aggr_func.fetch(input);
     }
+    LOG_DEBUG("after cal the aggr func loop");
   }
   for(auto& aggr_func: aggr_funcs) {
     aggr_func.end();
@@ -68,6 +70,7 @@ RC ProjectOperator::close()
 
 Tuple *ProjectOperator::current_tuple()
 {
+  LOG_DEBUG("in the current tuple");
   if (aggr_funcs.empty()) {
     tuple_.set_tuple(children_[0]->current_tuple());
     return &tuple_;
@@ -77,7 +80,9 @@ Tuple *ProjectOperator::current_tuple()
   for(auto& aggr_func: aggr_funcs) {
     value_cells.push_back(aggr_func.value());
   }
-  AggrTuple* aggr_tuple = new AggrTuple(value_cells);
+  LOG_DEBUG("before new AggrTuple");
+  AggrTuple* aggr_tuple = new AggrTuple(std::move(value_cells));
+  LOG_DEBUG("after new AggrTuple");
   tuple_.set_tuple(aggr_tuple);
   return &tuple_;
 }
