@@ -12,6 +12,7 @@ See the Mulan PSL v2 for more details. */
 // Created by WangYunlai on 2022/07/01.
 //
 
+#include <iostream>
 #include "common/log/log.h"
 #include "sql/operator/project_operator.h"
 #include "storage/record/record.h"
@@ -43,21 +44,19 @@ RC ProjectOperator::next()
     return RC::RECORD_EOF;
   }
   while(children_[0]->next() == SUCCESS) {
-    LOG_DEBUG("in the aggr func loop");
     auto* tuple = children_[0]->current_tuple();
-    for(auto& aggr_func: aggr_funcs) {
+    for(auto* aggr_func: aggr_funcs) {
       TupleCell input;
-      auto rc = tuple->find_cell(*aggr_func.aggr_field(), input);
+      auto rc = tuple->find_cell(*(aggr_func->aggr_field()), input);
       if (rc != RC::SUCCESS) {
         LOG_ERROR("cannot found field info in tuple");
         return rc;
       }
-      aggr_func.fetch(input);
+      aggr_func->fetch(input);
     }
-    LOG_DEBUG("after cal the aggr func loop");
   }
-  for(auto& aggr_func: aggr_funcs) {
-    aggr_func.end();
+  for(auto* aggr_func: aggr_funcs) {
+    aggr_func->end();
   }
   aggregated_ = true;
   return RC::SUCCESS;
@@ -78,8 +77,8 @@ Tuple *ProjectOperator::current_tuple()
   }
 
   std::vector<TupleCell> value_cells;
-  for(auto& aggr_func: aggr_funcs) {
-    value_cells.push_back(aggr_func.value());
+  for(auto* aggr_func: aggr_funcs) {
+    value_cells.push_back(aggr_func->value());
   }
   aggr_tuple_ = AggrTuple(std::move(value_cells));
   return &aggr_tuple_;
@@ -90,13 +89,22 @@ void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_
   // 对单表来说，展示的(alias) 字段总是字段名称，
   // 对多表查询来说，展示的alias 需要带表名字
   TupleCellSpec *spec = new TupleCellSpec(new FieldExpr(table, field_meta));
-  spec->set_alias(field_meta->name());
+  auto it = aggr_map_.find(field_meta);
+  if (it != aggr_map_.end()) {
+    LOG_DEBUG("aggr func type: %d, found aggr name: %s", it->second->type(), it->second->name().c_str());
+    spec->set_alias((it->second)->name().c_str());
+  } else {
+    spec->set_alias(field_meta->name());
+  }
   tuple_.add_cell_spec(spec);
 }
 
-void ProjectOperator::add_aggr_func(AggrFunc aggr_func)
+void ProjectOperator::add_aggr_func(AggrFunc *aggr_func)
 {
   aggr_funcs.push_back(aggr_func);
+  LOG_DEBUG("origin aggr_func name: %s, new_aggr_func name length: %d, func_type: %d", 
+    aggr_func->name().c_str(), (*aggr_funcs.rbegin())->name().size(), (*aggr_funcs.rbegin())->type());
+  aggr_map_.insert(std::make_pair(aggr_func->aggr_meta(), aggr_func));
 //  auto *aggr_meta = aggr_func.aggr_meta();
 //  char** default_value;
 //  make_default_value(aggr_meta->type(), *default_value);

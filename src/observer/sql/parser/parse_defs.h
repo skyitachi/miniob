@@ -81,6 +81,7 @@ typedef struct {
   Condition conditions[MAX_NUM];  // conditions in Where clause
   AggrAttr aggrs[MAX_NUM];
   size_t aggr_num;
+  int aggr_func_idx[MAX_NUM];
 } Selects;
 
 // struct of insert

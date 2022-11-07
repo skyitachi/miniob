@@ -370,6 +370,14 @@ select_attr:
 			relation_attr_init(&attr, $1, $3);
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
+    | COUNT LBRACE STAR RBRACE attr_list {
+	        AggrAttr aggr;
+			RelAttr attr;
+			relation_attr_init(&attr, NULL, "*");
+			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+	        aggr_attr_init(&aggr, &attr, "count");
+			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
+      }
 	| COUNT LBRACE ID RBRACE attr_list {
 	        AggrAttr aggr;
 	        RelAttr attr;

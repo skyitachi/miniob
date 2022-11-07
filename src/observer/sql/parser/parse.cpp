@@ -121,7 +121,10 @@ void attr_info_destroy(AttrInfo *attr_info)
   attr_info->name = nullptr;
 }
 
-void selects_init(Selects *selects, ...);
+void selects_init(Selects *selects, ...) {
+  memset(selects->aggr_func_idx, -1, sizeof(selects->aggr_func_idx));
+}
+
 void selects_append_attribute(Selects *selects, RelAttr *rel_attr)
 {
   selects->attributes[selects->attr_num++] = *rel_attr;
@@ -133,7 +136,7 @@ void selects_append_relation(Selects *selects, const char *relation_name)
 
 void selects_append_aggr(Selects* selects, AggrAttr *aggr_attr) {
   selects->aggrs[selects->aggr_num++] = *aggr_attr;
-  printf("in select_append_aggr func: %d\n", selects->aggr_num);
+  selects->aggr_func_idx[selects->aggr_num-1] = selects->aggr_num-1;
 }
 
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num)
@@ -145,6 +148,7 @@ void selects_append_conditions(Selects *selects, Condition conditions[], size_t 
   selects->condition_num = condition_num;
 }
 
+// NOTE: TODO: aggr_destroy
 void selects_destroy(Selects *selects)
 {
   for (size_t i = 0; i < selects->attr_num; i++) {

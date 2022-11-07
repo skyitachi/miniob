@@ -68,7 +68,11 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   for (int i = select_sql.attr_num - 1; i >= 0; i--) {
     const RelAttr &relation_attr = select_sql.attributes[i];
 
+    bool has_aggr_func = select_sql.aggr_func_idx[i] != -1;
     if (common::is_blank(relation_attr.relation_name) && 0 == strcmp(relation_attr.attribute_name, "*")) {
+      if (has_aggr_func) {
+        //
+      }
       for (Table *table : tables) {
         wildcard_fields(table, query_fields);
       }

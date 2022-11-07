@@ -413,12 +413,13 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   pred_oper.add_child(scan_oper);
   ProjectOperator project_oper;
   project_oper.add_child(&pred_oper);
+  
+  for (AggrFunc& aggr_func: select_stmt->aggr_funcs()) {
+    project_oper.add_aggr_func(&aggr_func);
+  }
+
   for (const Field &field : select_stmt->query_fields()) {
     project_oper.add_projection(field.table(), field.meta());
-  }
-  LOG_DEBUG("before add project_oper add aggr_func");
-  for (const AggrFunc& aggr_func: select_stmt->aggr_funcs()) {
-    project_oper.add_aggr_func(aggr_func);
   }
   rc = project_oper.open();
   if (rc != RC::SUCCESS) {

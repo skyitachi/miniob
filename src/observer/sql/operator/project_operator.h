@@ -14,6 +14,8 @@ See the Mulan PSL v2 for more details. */
 
 #pragma once
 
+#include <unordered_map>
+
 #include "sql/aggregate/aggr_func.h"
 #include "sql/operator/operator.h"
 #include "rc.h"
@@ -27,7 +29,7 @@ public:
   virtual ~ProjectOperator() = default;
 
   void add_projection(const Table *table, const FieldMeta *field);
-  void add_aggr_func(AggrFunc aggr_func);
+  void add_aggr_func(AggrFunc *aggr_func);
 
   RC open() override;
   RC next() override;
@@ -44,9 +46,10 @@ public:
 private:
   ProjectTuple tuple_;
   AggrTuple aggr_tuple_;
-  std::vector<AggrFunc> aggr_funcs;
+  std::vector<AggrFunc*> aggr_funcs;
   std::vector<TupleCell*> aggr_values_;
   bool aggregated_ = false;
+  std::unordered_map<const FieldMeta*, AggrFunc*> aggr_map_;
 
 
   RC make_default_value(AttrType attr_type, char *&dest);

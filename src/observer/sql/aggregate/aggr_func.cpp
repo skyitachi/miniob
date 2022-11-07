@@ -45,3 +45,30 @@ void AggrFunc::end() {
       break;
   }
 }
+
+const std::string& AggrFunc::name() const
+{
+  return func_name_;
+}
+
+std::string AggrFunc::get_aggr_func_alias() {
+  std::string func_name;
+  switch (aggr_func_type_) {
+    case AggrFuncType::COUNT:
+      func_name = "count";
+      break;
+    case AggrFuncType::MAX:
+      func_name = "max";
+      break;
+    case AggrFuncType::MIN:
+      func_name = "min";
+      break;
+    case AggrFuncType::AVG:
+      func_name = "avg";
+      break;
+    default:
+      func_name = "unknown";
+      break;
+  }
+  return func_name + "(" + field_.meta()->name() + ")";
+}

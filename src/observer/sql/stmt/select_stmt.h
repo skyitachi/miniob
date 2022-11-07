@@ -40,7 +40,7 @@ public:
 public:
   const std::vector<Table *> &tables() const { return tables_; }
   const std::vector<Field> &query_fields() const { return query_fields_; }
-  const std::vector<AggrFunc> &aggr_funcs() const { return aggr_func_; }
+  std::vector<AggrFunc> &aggr_funcs() { return aggr_func_; }
   FilterStmt *filter_stmt() const { return filter_stmt_; }
 
 private:
