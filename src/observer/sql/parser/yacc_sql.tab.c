@@ -1572,7 +1572,7 @@ yyreduce:
 #line 340 "yacc_sql.y"
                 {
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
-            selects_init(&CONTEXT->ssql->sstr.selection);
+//            selects_init(&CONTEXT->ssql->sstr.selection);
 			selects_append_relation(&CONTEXT->ssql->sstr.selection, (yyvsp[-3].string));
 
 			selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);

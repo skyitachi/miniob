@@ -51,8 +51,12 @@ const std::string& AggrFunc::name() const
   return func_name_;
 }
 
-std::string AggrFunc::get_aggr_func_alias() {
+std::string AggrFunc::get_aggr_func_alias(bool is_count_star) {
   std::string func_name;
+  if (is_count_star) {
+    func_name = "count(*)";
+    return func_name;
+  }
   switch (aggr_func_type_) {
     case AggrFuncType::COUNT:
       func_name = "count";

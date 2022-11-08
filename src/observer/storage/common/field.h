@@ -21,8 +21,7 @@ class Field
 {
 public:
   Field() = default;
-  Field(const Table *table, const FieldMeta *field) : table_(table), field_(field)
-  {}
+  Field(const Table *table, const FieldMeta *field) : table_(table), field_(field), is_aggr_field_(false){}
 
   const Table *table() const { return table_; }
   const FieldMeta *meta() const { return field_; }
@@ -43,7 +42,19 @@ public:
   {
     this->field_ = field;
   }
+  void set_alias(const std::string& alias) {
+    alias_name_ = alias;
+  }
+  void set_aggr_field(bool aggr) {
+    is_aggr_field_ = true;
+  }
+
+  bool is_aggr_field() {
+    return is_aggr_field_;
+  }
 private:
   const Table *table_ = nullptr;
   const FieldMeta *field_ = nullptr;
+  std::string alias_name_;
+  bool is_aggr_field_;
 };

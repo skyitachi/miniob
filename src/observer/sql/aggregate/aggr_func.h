@@ -26,6 +26,10 @@ public:
   AggrFunc(Field field, AggrFuncType aggr_func_type): field_(field), aggr_func_type_(aggr_func_type) {
     func_name_ = get_aggr_func_alias();
   }
+
+  AggrFunc(Field field, AggrFuncType aggr_func_type, bool is_count_star): field_(field), aggr_func_type_(aggr_func_type) {
+    func_name_ = get_aggr_func_alias(is_count_star);
+  }
   RC eval(const TupleCell& input, TupleCell& output);
   RC fetch(const TupleCell& input);
   void end();
@@ -51,7 +55,7 @@ private:
   std::string func_name_;
 
   RC count_fetch(const TupleCell& input);
-  std::string get_aggr_func_alias();
+  std::string get_aggr_func_alias(bool is_count_star = false);
   void count_end();
 };
 

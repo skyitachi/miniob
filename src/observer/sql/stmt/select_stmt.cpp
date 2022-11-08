@@ -36,6 +36,11 @@ static void wildcard_fields(Table *table, std::vector<Field> &field_metas)
   }
 }
 
+static void get_first_field(Table *table, std::vector<Field> &field_metas) {
+  const TableMeta& table_meta = table->table_meta();
+  field_metas.push_back(Field(table, table_meta.field(0)));
+}
+
 RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
 {
   if (nullptr == db) {
@@ -68,13 +73,20 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   for (int i = select_sql.attr_num - 1; i >= 0; i--) {
     const RelAttr &relation_attr = select_sql.attributes[i];
 
-    bool has_aggr_func = select_sql.aggr_func_idx[i] != -1;
+    bool has_aggr_func = (select_sql.aggr_func_idx[i + 1] == i + 1);
+    LOG_DEBUG("found %d attr has aggr func: %d, func_idx: %d, selects_ptr: %p", i, has_aggr_func, select_sql.aggr_func_idx[i], &select_sql);
     if (common::is_blank(relation_attr.relation_name) && 0 == strcmp(relation_attr.attribute_name, "*")) {
       if (has_aggr_func) {
-        //
-      }
-      for (Table *table : tables) {
-        wildcard_fields(table, query_fields);
+        // NOTE: 不考虑join的情况
+        if (tables.size() > 1) {
+          LOG_WARN("count(*) cannot support table join");
+          return RC::INVALID_ARGUMENT;
+        }
+        get_first_field(tables[0], query_fields);
+      } else {
+        for (Table *table : tables) {
+          wildcard_fields(table, query_fields);
+        }
       }
 
     } else if (!common::is_blank(relation_attr.relation_name)) { // TODO
@@ -131,10 +143,13 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   std::vector<AggrFunc> aggr_funcs;
   LOG_DEBUG("[select_stmt] got aggr_func count: %d", select_sql.aggr_num);
   for (int i = 0; i < select_sql.aggr_num; i++) {
+    const RelAttr &relation_attr = select_sql.attributes[i];
     auto aggr_attr = select_sql.aggrs[i];
-    LOG_DEBUG("[select_stmt] got aggr_func: %s", aggr_attr.func_name);
+    LOG_DEBUG("[select_stmt] got aggr_func: %s, attr_name: %s", aggr_attr.func_name, relation_attr.attribute_name);
     if (0 == strcmp(aggr_attr.func_name, "count")) {
-      aggr_funcs.emplace_back(query_fields[i], AggrFuncType::COUNT);
+      LOG_DEBUG("[select_stmt] eq: %d, len: %d, len(*): %d", strcmp(relation_attr.attribute_name, "*"), strlen(relation_attr.attribute_name), strlen("*"));
+      aggr_funcs.emplace_back(query_fields[i], AggrFuncType::COUNT,
+          strcmp(relation_attr.attribute_name, "*") == 0);
     }
   }
 

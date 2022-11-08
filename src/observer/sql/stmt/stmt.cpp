@@ -31,6 +31,7 @@ RC Stmt::create_stmt(Db *db, const Query &query, Stmt *&stmt)
       return DeleteStmt::create(db, query.sstr.deletion, stmt);   
     }
   case SCF_SELECT: {
+    printf("create_stmt selects_ptr: %p\n", &query.sstr.selection);
     return SelectStmt::create(db, query.sstr.selection, stmt);
   }
   default: {

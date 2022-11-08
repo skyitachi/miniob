@@ -70,7 +70,6 @@ RC ProjectOperator::close()
 
 Tuple *ProjectOperator::current_tuple()
 {
-  LOG_DEBUG("in the current tuple");
   if (aggr_funcs.empty()) {
     tuple_.set_tuple(children_[0]->current_tuple());
     return &tuple_;

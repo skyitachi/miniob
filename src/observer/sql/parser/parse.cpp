@@ -121,13 +121,12 @@ void attr_info_destroy(AttrInfo *attr_info)
   attr_info->name = nullptr;
 }
 
-void selects_init(Selects *selects, ...) {
-  memset(selects->aggr_func_idx, -1, sizeof(selects->aggr_func_idx));
-}
+void selects_init(Selects *selects, ...);
 
 void selects_append_attribute(Selects *selects, RelAttr *rel_attr)
 {
   selects->attributes[selects->attr_num++] = *rel_attr;
+  printf("selects_append_attribute: %d, selects_ptr: %p\n", selects->attr_num, selects);
 }
 void selects_append_relation(Selects *selects, const char *relation_name)
 {
@@ -136,7 +135,11 @@ void selects_append_relation(Selects *selects, const char *relation_name)
 
 void selects_append_aggr(Selects* selects, AggrAttr *aggr_attr) {
   selects->aggrs[selects->aggr_num++] = *aggr_attr;
-  selects->aggr_func_idx[selects->aggr_num-1] = selects->aggr_num-1;
+  // TODO: 为什么不生效
+  selects->aggr_func_idx[selects->attr_num] = selects->aggr_num;
+  printf("aggr_num: %d, attr_num: %d, idx: %d, selects_ptr: %p\n",
+      selects->aggr_num, selects->attr_num, selects->aggr_func_idx[selects->attr_num - 1], selects);
+
 }
 
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num)
