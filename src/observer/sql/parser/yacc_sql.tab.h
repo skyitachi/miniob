@@ -102,7 +102,11 @@ extern int yydebug;
     SSS = 303,                     /* SSS  */
     STAR = 304,                    /* STAR  */
     STRING_V = 305,                /* STRING_V  */
-    COUNT = 306                    /* COUNT  */
+    COUNT = 306,                   /* COUNT  */
+    SUM = 307,                     /* SUM  */
+    MIN = 308,                     /* MIN  */
+    MAX = 309,                     /* MAX  */
+    AVG = 310                      /* AVG  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -121,7 +125,7 @@ union YYSTYPE
   float floats;
 	char *position;
 
-#line 125 "yacc_sql.tab.h"
+#line 129 "yacc_sql.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

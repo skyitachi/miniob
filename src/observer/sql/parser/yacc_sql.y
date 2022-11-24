@@ -121,6 +121,10 @@ ParserContext *get_context(yyscan_t scanner)
 %token <string> STAR
 %token <string> STRING_V
 %token <string> COUNT
+%token <string> SUM
+%token <string> MIN
+%token <string> MAX
+%token <string> AVG
 //非终结符
 
 %type <number> type;
@@ -393,6 +397,11 @@ select_attr:
 	        aggr_attr_init(&aggr, &attr, "count");
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
+	  }
+	| ID LBRACE select_attr RBRACE attr_list {
+	        AggrAttr aggr;
+	        aggr_init(&aggr, $1);
+	        selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
 	  }
     ;
 attr_list:

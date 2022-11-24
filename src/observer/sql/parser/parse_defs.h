@@ -82,6 +82,7 @@ typedef struct {
   AggrAttr aggrs[MAX_NUM];
   size_t aggr_num;
   int aggr_func_idx[MAX_NUM + 1];
+  int in_aggr;
 } Selects;
 
 // struct of insert
@@ -195,6 +196,7 @@ extern "C" {
 void relation_attr_init(RelAttr *relation_attr, const char *relation_name, const char *attribute_name);
 void relation_attr_destroy(RelAttr *relation_attr);
 
+void aggr_init(AggrAttr* aggr_attr, const char* func_name);
 void aggr_attr_init(AggrAttr *aggr_attr, RelAttr* relation_attr, const char* func_name);
 void aggr_attr_destroy(AggrAttr *aggr_attr);
 

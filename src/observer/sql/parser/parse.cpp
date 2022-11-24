@@ -40,6 +40,13 @@ void relation_attr_destroy(RelAttr *relation_attr)
   relation_attr->attribute_name = nullptr;
 }
 
+void aggr_init(AggrAttr *aggr_attr, const char* func_name) {
+  if (func_name != nullptr) {
+    aggr_attr->func_name = strdup(func_name);
+  }
+  printf("aggr_attr->func_name: %s, raw func_name: %s\n", aggr_attr->func_name, func_name);
+}
+
 void aggr_attr_init(AggrAttr *aggr_attr, RelAttr* relation_attr, const char* func_name) {
   if (func_name != nullptr) {
     aggr_attr->func_name = strdup(func_name);
@@ -127,6 +134,14 @@ void selects_append_attribute(Selects *selects, RelAttr *rel_attr)
 {
   selects->attributes[selects->attr_num++] = *rel_attr;
   printf("selects_append_attribute: %d, selects_ptr: %p\n", selects->attr_num, selects);
+  if (selects->in_aggr > 0) {
+    if (selects->aggr_num > 0) {
+      selects->aggrs[selects->aggr_num - 1].rel_attr = &selects->attributes[selects->attr_num - 1];
+    } else {
+      printf("selects_append_attribute error unexpected selects aggr_num\n");
+    }
+    selects->in_aggr = 0;
+  }
 }
 void selects_append_relation(Selects *selects, const char *relation_name)
 {
@@ -134,6 +149,7 @@ void selects_append_relation(Selects *selects, const char *relation_name)
 }
 
 void selects_append_aggr(Selects* selects, AggrAttr *aggr_attr) {
+  selects->in_aggr = 0;
   selects->aggrs[selects->aggr_num++] = *aggr_attr;
   // TODO: 为什么不生效
   selects->aggr_func_idx[selects->attr_num] = selects->aggr_num;
