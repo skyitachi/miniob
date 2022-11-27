@@ -63,3 +63,52 @@ int TupleCell::compare(const TupleCell &other) const
   LOG_WARN("not supported");
   return -1; // TODO return rc?
 }
+
+RC TupleCell::add(const TupleCell &rhs)
+{
+  switch (rhs.attr_type()) {
+    case AttrType::FLOATS: {
+      float lv = *reinterpret_cast<float*>(data_);
+      float rv = *reinterpret_cast<float*>(rhs.data_);
+      float result = lv + rv;
+      memcpy(data_, &result, sizeof(float));
+      return RC::SUCCESS;
+    }
+    case AttrType::INTS: {
+      int32_t lv = *reinterpret_cast<int32_t*>(data_);
+      int32_t rv = *reinterpret_cast<int32_t*>(rhs.data_);
+      int32_t result = lv + rv;
+      memcpy(data_, &result, sizeof(int32_t));
+      return RC::SUCCESS;
+    }
+    default:
+      return RC::GENERIC_ERROR;
+  }
+}
+
+RC TupleCell::divide(int32_t count)
+{
+  switch (attr_type_) {
+    case AttrType::FLOATS: {
+      float v = *reinterpret_cast<float*>(data_);
+      float r = v / count;
+      memcpy(data_, &r, sizeof(float));
+      return RC::SUCCESS;
+    }
+    case AttrType::INTS: {
+      int32_t v = *reinterpret_cast<int32_t*>(data_);
+      float r = v * 1.0 / count;
+      memcpy(data_, &r, sizeof(float));
+      set_type(AttrType::FLOATS);
+    }
+    default:
+      return RC::GENERIC_ERROR;
+  }
+}
+
+void TupleCell::copy(const TupleCell &other)
+{
+  if (length_ == other.length_) {
+    memcpy(data_, other.data_, other.length_);
+  }
+}

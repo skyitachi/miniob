@@ -19,6 +19,14 @@ See the Mulan PSL v2 for more details. */
 #include "storage/common/db.h"
 #include "storage/common/table.h"
 
+static std::unordered_map<std::string, AggrFuncType> g_aggr_funcs_dict = {
+    {"count", AggrFuncType::COUNT},
+    {"sum", AggrFuncType::SUM},
+    {"max", AggrFuncType::MAX},
+    {"min", AggrFuncType::MIN},
+    {"avg", AggrFuncType::AVG}
+};
+
 SelectStmt::~SelectStmt()
 {
   if (nullptr != filter_stmt_) {
@@ -146,10 +154,12 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
     const RelAttr &relation_attr = select_sql.attributes[i];
     auto aggr_attr = select_sql.aggrs[i];
     LOG_DEBUG("[select_stmt] got aggr_func: %s, attr_name: %s", aggr_attr.func_name, relation_attr.attribute_name);
-    if (0 == strcmp(aggr_attr.func_name, "count")) {
-      LOG_DEBUG("[select_stmt] eq: %d, len: %d, len(*): %d", strcmp(relation_attr.attribute_name, "*"), strlen(relation_attr.attribute_name), strlen("*"));
-      aggr_funcs.emplace_back(query_fields[i], AggrFuncType::COUNT,
-          strcmp(relation_attr.attribute_name, "*") == 0);
+    auto it = g_aggr_funcs_dict.find(aggr_attr.func_name);
+    if (it != g_aggr_funcs_dict.end()) {
+      aggr_funcs.emplace_back(query_fields[i], it->second,
+                              strcmp(relation_attr.attribute_name, "*") == 0);
+    } else {
+      LOG_DEBUG("[select_stmt] unexpect aggr func name: %s", aggr_attr.func_name);
     }
   }
 
