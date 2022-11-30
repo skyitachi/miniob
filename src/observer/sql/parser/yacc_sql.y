@@ -374,30 +374,6 @@ select_attr:
 			relation_attr_init(&attr, $1, $3);
 			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
 		}
-    | COUNT LBRACE STAR RBRACE attr_list {
-	        AggrAttr aggr;
-			RelAttr attr;
-			relation_attr_init(&attr, NULL, "*");
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-	        aggr_attr_init(&aggr, &attr, "count");
-			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
-      }
-	| COUNT LBRACE ID RBRACE attr_list {
-	        AggrAttr aggr;
-	        RelAttr attr;
-	        relation_attr_init(&attr, NULL, $3);
-	        aggr_attr_init(&aggr, &attr, "count");
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
-	    }
-	| COUNT LBRACE ID DOT ID RBRACE attr_list {
-	        AggrAttr aggr;
-	        RelAttr attr;
-	        relation_attr_init(&attr, $3, $5);
-	        aggr_attr_init(&aggr, &attr, "count");
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
-	  }
 	| ID LBRACE select_attr RBRACE attr_list {
 	        AggrAttr aggr;
 	        aggr_init(&aggr, $1);
@@ -420,22 +396,11 @@ attr_list:
         // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length].attribute_name=$4;
         // CONTEXT->ssql->sstr.selection.attributes[CONTEXT->select_length++].relation_name=$2;
   	  }
-  	| COMMA COUNT LBRACE ID RBRACE attr_list {
+	| COMMA ID LBRACE select_attr RBRACE attr_list {
 	        AggrAttr aggr;
-	        RelAttr attr;
-	        relation_attr_init(&attr, NULL, $4);
-	        aggr_attr_init(&aggr, &attr, "count");
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
-  	  }
-  	| COMMA COUNT LBRACE ID DOT ID RBRACE attr_list {
-	        AggrAttr aggr;
-	        RelAttr attr;
-	        relation_attr_init(&attr, $4, $6);
-	        aggr_attr_init(&aggr, &attr, "count");
-			selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
-			selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
-  	  }
+	        aggr_init(&aggr, $2);
+	        selects_append_aggr(&CONTEXT->ssql->sstr.selection, &aggr);
+	  }
   	;
 
 rel_list:

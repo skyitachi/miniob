@@ -106,9 +106,21 @@ RC TupleCell::divide(int32_t count)
   }
 }
 
-void TupleCell::copy(const TupleCell &other)
+RC TupleCell::copy(const TupleCell &other, std::string& memory)
 {
+  if (attr_type_ == AttrType::CHARS && other.attr_type_ != AttrType::CHARS) {
+    LOG_ERROR("copy value unexpected type, target_type: %d, src_type: %d", attr_type_, other.attr_type_);
+    return RC::GENERIC_ERROR;
+  }
+  if (attr_type_ == AttrType::CHARS) {
+    memory.resize(other.length_);
+    set_data(memory.data());
+    memcpy(data_, other.data_, other.length_);
+    set_length(other.length_);
+    return RC::SUCCESS;
+  }
   if (length_ == other.length_) {
     memcpy(data_, other.data_, other.length_);
   }
+  return RC::SUCCESS;
 }

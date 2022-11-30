@@ -8,11 +8,6 @@
 static const int32_t d_int = 0;
 static const float d_float = 0.0;
 
-RC AggrFunc::eval(const TupleCell &input, TupleCell &output)
-{
-  return RC::GENERIC_ERROR;
-}
-
 RC AggrFunc::fetch(const TupleCell &input)
 {
   switch (aggr_func_type_) {
@@ -33,7 +28,7 @@ RC AggrFunc::fetch(const TupleCell &input)
 
 RC AggrFunc::count_fetch(const TupleCell &input)
 {
-  if (!common::is_blank(input.data())) {
+  if (input.data() != nullptr) {
     count_++;
   }
   return RC::SUCCESS;
@@ -41,7 +36,7 @@ RC AggrFunc::count_fetch(const TupleCell &input)
 
 RC AggrFunc::sum_fetch(const TupleCell &input)
 {
-  if (!common::is_blank(input.data())) {
+  if (input.data() != nullptr) {
     value_.add(input);
   }
   return RC::SUCCESS;
@@ -49,7 +44,7 @@ RC AggrFunc::sum_fetch(const TupleCell &input)
 
 RC AggrFunc::avg_fetch(const TupleCell &input)
 {
-  if (!common::is_blank(input.data())) {
+  if (input.data() != nullptr) {
     value_.add(input);
     count_++;
   }
@@ -58,16 +53,16 @@ RC AggrFunc::avg_fetch(const TupleCell &input)
 
 RC AggrFunc::min_max_fetch(const TupleCell &input, bool min)
 {
-  if (!common::is_blank(input.data())) {
+  if (input.data() != nullptr) {
     if (count_++ == 0) {
-      value_.copy(input);
+      value_.copy(input, value_s);
       return RC::SUCCESS;
     }
     int ret = value_.compare(input);
     if (min && ret > 0) {
-      value_.copy(input);
+      value_.copy(input, value_s);
     } else if (!min && ret < 0) {
-      value_.copy(input);
+      value_.copy(input, value_s);
     }
   }
   return RC::SUCCESS;
@@ -142,17 +137,27 @@ std::string AggrFunc::get_aggr_func_alias(bool is_count_star) {
 void AggrFunc::init_value()
 {
   value_.set_type(field_.attr_type());
+  std::cout << "value_ attr type: " << value_.attr_type() << std::endl;
   switch (value_.attr_type()) {
-    case AttrType::INTS:
+    case AttrType::INTS: {
       memcpy(value_t, &d_int, sizeof(int32_t));
       value_.set_length(sizeof(int32_t));
+      value_.set_data(value_t);
       break;
-    case AttrType::FLOATS:
+    }
+    case AttrType::FLOATS: {
       memcpy(value_t, &d_float, sizeof(float));
       value_.set_length(sizeof(float));
+      value_.set_data(value_t);
       break;
+    }
+    case AttrType::CHARS: {
+      value_s.clear();
+      value_.set_data(value_s.data());
+      value_.set_length(0);
+      break;
+    }
     default:
       break;
   }
-  value_.set_data(value_t);
 }

@@ -502,7 +502,7 @@ extern int yylex \
 #undef yyTABLES_NAME
 #endif
 
-#line 89 "lex_sql.l"
+#line 88 "lex_sql.l"
 
 
 #line 508 "lex.yy.h"

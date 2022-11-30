@@ -52,6 +52,7 @@ RC ProjectOperator::next()
         LOG_ERROR("cannot found field info in tuple");
         return rc;
       }
+      std::cout << "aggr_func: " << aggr_func->name() << " , field: " << aggr_func->aggr_field()->field_name() << std::endl;
       aggr_func->fetch(input);
     }
   }
@@ -83,6 +84,7 @@ Tuple *ProjectOperator::current_tuple()
   return &aggr_tuple_;
 }
 
+// NOTE: 这里有问题，感觉数量上没有对应起来
 void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_meta)
 {
   // 对单表来说，展示的(alias) 字段总是字段名称，
@@ -114,25 +116,4 @@ void ProjectOperator::add_aggr_func(AggrFunc *aggr_func)
 RC ProjectOperator::tuple_cell_spec_at(int index, const TupleCellSpec *&spec) const
 {
   return tuple_.cell_spec_at(index, spec);
-}
-
-RC ProjectOperator::make_default_value(AttrType attr_type, char *&dest)
-{
-  switch (attr_type) {
-    case INTS: {
-      dest = new char[4];
-      int32_t value = 0;
-      memcpy(dest, &value, 4);
-      break;
-    }
-    case FLOATS: {
-      dest = new char[4];
-      float value = 0.0f;
-      memcpy(dest, &value, 4);
-      break;
-    }
-    default:
-      return RC::UNIMPLENMENT;
-  }
-  return RC::SUCCESS;
 }

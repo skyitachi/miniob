@@ -37,7 +37,7 @@ public:
   RC add(const TupleCell& rhs);
   RC divide(int32_t count);
 
-  void copy(const TupleCell &other);
+  RC copy(const TupleCell &other, std::string& memory);
 
   void to_string(std::ostream &os) const;
 
@@ -55,7 +55,12 @@ public:
     return attr_type_;
   }
 
-private:
+  template <class T>
+  T getValue() const {
+    return *reinterpret_cast<T*>(data_);
+  }
+
+  private:
   AttrType attr_type_ = UNDEFINED;
   int length_ = -1;
   char *data_ = nullptr; // real data. no need to move to field_meta.offset

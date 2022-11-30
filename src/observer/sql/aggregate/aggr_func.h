@@ -33,7 +33,6 @@ public:
     func_name_ = get_aggr_func_alias(is_count_star);
     init_value();
   }
-  RC eval(const TupleCell& input, TupleCell& output);
   RC fetch(const TupleCell& input);
   void end();
   const FieldMeta* aggr_meta() const {
@@ -55,6 +54,8 @@ private:
   Field field_;
   TupleCell value_;
   char value_t[4];
+  // NOTE: store varchar type value
+  std::string value_s;
   int count_ = 0;
   std::string func_name_;
 

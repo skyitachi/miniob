@@ -51,7 +51,4 @@ private:
   bool aggregated_ = false;
   std::unordered_map<const FieldMeta*, AggrFunc*> aggr_map_;
 
-
-  RC make_default_value(AttrType attr_type, char *&dest);
-
 };
