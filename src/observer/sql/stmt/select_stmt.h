@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details. */
 #pragma once
 
 #include <vector>
+#include <unordered_map>
 
 #include "rc.h"
 #include "sql/stmt/stmt.h"
@@ -40,13 +41,13 @@ public:
 public:
   const std::vector<Table *> &tables() const { return tables_; }
   const std::vector<Field> &query_fields() const { return query_fields_; }
-  std::vector<AggrFunc> &aggr_funcs() { return aggr_func_; }
+  std::vector<std::shared_ptr<AggrFunc>> &aggr_funcs() { return aggr_func_; }
   FilterStmt *filter_stmt() const { return filter_stmt_; }
 
 private:
   std::vector<Field> query_fields_;
   std::vector<Table *> tables_;
-  std::vector<AggrFunc> aggr_func_;
+  std::vector<std::shared_ptr<AggrFunc>> aggr_func_;
   FilterStmt *filter_stmt_ = nullptr;
 };
 

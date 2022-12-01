@@ -78,9 +78,10 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
   
   // collect query fields in `select` statement
   std::vector<Field> query_fields;
+  std::unordered_map<int, int> query_field_idx;
+  // NOTE: 终于知道为啥是逆序的了。。。
   for (int i = select_sql.attr_num - 1; i >= 0; i--) {
     const RelAttr &relation_attr = select_sql.attributes[i];
-
     bool has_aggr_func = (select_sql.aggr_func_idx[i + 1] == i + 1);
     LOG_DEBUG("found %d attr has aggr func: %d, func_idx: %d, selects_ptr: %p", i, has_aggr_func, select_sql.aggr_func_idx[i], &select_sql);
     if (common::is_blank(relation_attr.relation_name) && 0 == strcmp(relation_attr.attribute_name, "*")) {
@@ -91,6 +92,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
           return RC::INVALID_ARGUMENT;
         }
         get_first_field(tables[0], query_fields);
+        query_field_idx[i + 1] = query_fields.size();
       } else {
         for (Table *table : tables) {
           wildcard_fields(table, query_fields);
@@ -127,6 +129,7 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
           }
 
         query_fields.push_back(Field(table, field_meta));
+        query_field_idx[i + 1] = query_fields.size();
         }
       }
     } else {
@@ -143,21 +146,32 @@ RC SelectStmt::create(Db *db, const Selects &select_sql, Stmt *&stmt)
       }
 
       query_fields.push_back(Field(table, field_meta));
+      query_field_idx[i + 1] = query_fields.size();
     }
   }
 
   LOG_INFO("got %d tables in from stmt and %d fields in query stmt", tables.size(), query_fields.size());
 
-  std::vector<AggrFunc> aggr_funcs;
-  LOG_DEBUG("[select_stmt] got aggr_func count: %d", select_sql.aggr_num);
-  for (int i = 0; i < select_sql.aggr_num; i++) {
-    const RelAttr &relation_attr = select_sql.attributes[i];
+  std::vector<std::shared_ptr<AggrFunc>> aggr_funcs;
+  LOG_DEBUG("[select_stmt] got aggr_func count: %d, attr_count: %d", select_sql.aggr_num, select_sql.attr_num);
+  for (int i = select_sql.aggr_num - 1; i >= 0; i--) {
     auto aggr_attr = select_sql.aggrs[i];
-    LOG_DEBUG("[select_stmt] got aggr_func: %s, attr_name: %s", aggr_attr.func_name, relation_attr.attribute_name);
+    int attr_idx = select_sql.aggr_func_idx[i + 1];
+    int field_idx = query_field_idx[attr_idx];
+    assert(attr_idx == i + 1 && field_idx != 0);
+    const RelAttr &relation_attr = select_sql.attributes[attr_idx - 1];
+    std::string func_name = aggr_attr.func_name;
+    std::string field_name = relation_attr.attribute_name;
+    if (field_name == "*" && func_name != "count") {
+      return RC::INVALID_ARGUMENT;
+    }
+
+    LOG_DEBUG("[select_stmt] got aggr_func: %s, attr_name: %s, field_name: %s", aggr_attr.func_name, relation_attr.attribute_name,
+        query_fields[field_idx - 1].field_name());
     auto it = g_aggr_funcs_dict.find(aggr_attr.func_name);
     if (it != g_aggr_funcs_dict.end()) {
-      aggr_funcs.emplace_back(query_fields[i], it->second,
-                              strcmp(relation_attr.attribute_name, "*") == 0);
+      aggr_funcs.push_back(std::make_shared<AggrFunc>(query_fields[field_idx - 1], it->second,
+                              strcmp(relation_attr.attribute_name, "*") == 0));
     } else {
       LOG_DEBUG("[select_stmt] unexpect aggr func name: %s", aggr_attr.func_name);
     }

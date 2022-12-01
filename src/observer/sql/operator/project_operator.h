@@ -28,8 +28,8 @@ public:
 
   virtual ~ProjectOperator() = default;
 
-  void add_projection(const Table *table, const FieldMeta *field);
-  void add_aggr_func(AggrFunc *aggr_func);
+  void add_projection(const Table *table, const FieldMeta *field, int idx);
+  void add_aggr_func(std::shared_ptr<AggrFunc> aggr_func, int idx);
 
   RC open() override;
   RC next() override;
@@ -46,9 +46,9 @@ public:
 private:
   ProjectTuple tuple_;
   AggrTuple aggr_tuple_;
-  std::vector<AggrFunc*> aggr_funcs;
+  std::vector<std::shared_ptr<AggrFunc>> aggr_funcs;
   std::vector<TupleCell*> aggr_values_;
   bool aggregated_ = false;
-  std::unordered_map<const FieldMeta*, AggrFunc*> aggr_map_;
+  std::unordered_map<int, std::shared_ptr<AggrFunc>> aggr_map_;
 
 };

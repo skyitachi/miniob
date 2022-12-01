@@ -45,18 +45,18 @@ RC ProjectOperator::next()
   }
   while(children_[0]->next() == SUCCESS) {
     auto* tuple = children_[0]->current_tuple();
-    for(auto* aggr_func: aggr_funcs) {
+    for(auto& aggr_func: aggr_funcs) {
       TupleCell input;
+      LOG_DEBUG("aggr_func name: %s, aggr_field: %p", aggr_func->name().c_str(), aggr_func->aggr_field());
       auto rc = tuple->find_cell(*(aggr_func->aggr_field()), input);
       if (rc != RC::SUCCESS) {
         LOG_ERROR("cannot found field info in tuple");
         return rc;
       }
-      std::cout << "aggr_func: " << aggr_func->name() << " , field: " << aggr_func->aggr_field()->field_name() << std::endl;
       aggr_func->fetch(input);
     }
   }
-  for(auto* aggr_func: aggr_funcs) {
+  for(auto& aggr_func: aggr_funcs) {
     aggr_func->end();
   }
   aggregated_ = true;
@@ -77,22 +77,23 @@ Tuple *ProjectOperator::current_tuple()
   }
 
   std::vector<TupleCell> value_cells;
-  for(auto* aggr_func: aggr_funcs) {
+  for(auto& aggr_func: aggr_funcs) {
     value_cells.push_back(aggr_func->value());
   }
   aggr_tuple_ = AggrTuple(std::move(value_cells));
   return &aggr_tuple_;
 }
 
-// NOTE: 这里有问题，感觉数量上没有对应起来
-void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_meta)
+void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_meta, int idx)
 {
   // 对单表来说，展示的(alias) 字段总是字段名称，
   // 对多表查询来说，展示的alias 需要带表名字
+  // NOTE: 共用field_meta会有问题吗
   TupleCellSpec *spec = new TupleCellSpec(new FieldExpr(table, field_meta));
-  auto it = aggr_map_.find(field_meta);
+  auto it = aggr_map_.find(idx);
   if (it != aggr_map_.end()) {
-    LOG_DEBUG("aggr func type: %d, found aggr name: %s", it->second->type(), it->second->name().c_str());
+    LOG_DEBUG("aggr func type: %d, found aggr name: %s, field_meta: %p",
+        it->second->type(), it->second->name().c_str(), field_meta);
     spec->set_alias((it->second)->name().c_str());
   } else {
     spec->set_alias(field_meta->name());
@@ -100,12 +101,12 @@ void ProjectOperator::add_projection(const Table *table, const FieldMeta *field_
   tuple_.add_cell_spec(spec);
 }
 
-void ProjectOperator::add_aggr_func(AggrFunc *aggr_func)
+void ProjectOperator::add_aggr_func(std::shared_ptr<AggrFunc> aggr_func, int idx)
 {
+  LOG_DEBUG("aggr_func: %s, index: %d", aggr_func->name().c_str(), idx);
   aggr_funcs.push_back(aggr_func);
-  LOG_DEBUG("origin aggr_func name: %s, new_aggr_func name length: %d, func_type: %d", 
-    aggr_func->name().c_str(), (*aggr_funcs.rbegin())->name().size(), (*aggr_funcs.rbegin())->type());
-  aggr_map_.insert(std::make_pair(aggr_func->aggr_meta(), aggr_func));
+  // aggr_meta 可能是一个对应多个aggr_func
+  aggr_map_.insert(std::make_pair(idx, aggr_func));
 //  auto *aggr_meta = aggr_func.aggr_meta();
 //  char** default_value;
 //  make_default_value(aggr_meta->type(), *default_value);

@@ -137,7 +137,6 @@ std::string AggrFunc::get_aggr_func_alias(bool is_count_star) {
 void AggrFunc::init_value()
 {
   value_.set_type(field_.attr_type());
-  std::cout << "value_ attr type: " << value_.attr_type() << std::endl;
   switch (value_.attr_type()) {
     case AttrType::INTS: {
       memcpy(value_t, &d_int, sizeof(int32_t));

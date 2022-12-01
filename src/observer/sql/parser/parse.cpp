@@ -133,29 +133,21 @@ void selects_init(Selects *selects, ...);
 void selects_append_attribute(Selects *selects, RelAttr *rel_attr)
 {
   selects->attributes[selects->attr_num++] = *rel_attr;
-  printf("selects_append_attribute: %d, selects_ptr: %p\n", selects->attr_num, selects);
-  if (selects->in_aggr > 0) {
-    if (selects->aggr_num > 0) {
-      selects->aggrs[selects->aggr_num - 1].rel_attr = &selects->attributes[selects->attr_num - 1];
-    } else {
-      printf("selects_append_attribute error unexpected selects aggr_num\n");
-    }
-    selects->in_aggr = 0;
-  }
 }
 void selects_append_relation(Selects *selects, const char *relation_name)
 {
   selects->relations[selects->relation_num++] = strdup(relation_name);
 }
 
+// TODO: 这里解析的有问题
 void selects_append_aggr(Selects* selects, AggrAttr *aggr_attr) {
-  selects->in_aggr = 0;
+  aggr_attr->rel_attr = &selects->attributes[selects->attr_num - 1];
   selects->aggrs[selects->aggr_num++] = *aggr_attr;
-  // TODO: 为什么不生效
-  selects->aggr_func_idx[selects->attr_num] = selects->aggr_num;
-  printf("aggr_num: %d, attr_num: %d, idx: %d, selects_ptr: %p\n",
-      selects->aggr_num, selects->attr_num, selects->aggr_func_idx[selects->attr_num - 1], selects);
+  selects->aggr_func_idx[selects->aggr_num] = selects->attr_num;
 
+  printf("aggr_num: %d, attr_num: %d, idx: %d, aggr_func: %s, attr_name: %s\n",
+      selects->aggr_num, selects->attr_num, selects->aggr_func_idx[selects->aggr_num],
+      aggr_attr->func_name, aggr_attr->rel_attr->attribute_name);
 }
 
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num)

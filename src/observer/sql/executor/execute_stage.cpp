@@ -413,16 +413,18 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
   pred_oper.add_child(scan_oper);
   ProjectOperator project_oper;
   project_oper.add_child(&pred_oper);
-  
-  for (AggrFunc& aggr_func: select_stmt->aggr_funcs()) {
-    project_oper.add_aggr_func(&aggr_func);
-  }
 
+  // 用index才是最准的
+  for(int i = 0; i < select_stmt->aggr_funcs().size(); i++) {
+    project_oper.add_aggr_func(select_stmt->aggr_funcs()[i], i);
+  }
 
   LOG_DEBUG("query_fields length: %d", select_stmt->query_fields().size());
-  for (const Field &field : select_stmt->query_fields()) {
-    project_oper.add_projection(field.table(), field.meta());
+  for (int i = 0; i < select_stmt->query_fields().size(); i++) {
+    const Field& field = select_stmt->query_fields()[i];
+    project_oper.add_projection(field.table(), field.meta(), i);
   }
+
   rc = project_oper.open();
   if (rc != RC::SUCCESS) {
     LOG_WARN("failed to open operator");
