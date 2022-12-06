@@ -83,6 +83,8 @@ public:
   {
     if (value.type == CHARS) {
       tuple_cell_.set_length(strlen((const char *)value.data));
+    } else if (value.type == DATES) {
+      tuple_cell_.set_length(4);
     }
   }
 

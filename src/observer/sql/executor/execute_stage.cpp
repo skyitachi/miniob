@@ -442,7 +442,6 @@ RC ExecuteStage::do_select(SQLStageEvent *sql_event)
       LOG_WARN("failed to get current record. rc=%s", strrc(rc));
       break;
     }
-    LOG_DEBUG("tuple num: %d", tuple->cell_num());
 
     tuple_to_string(ss, *tuple);
     ss << std::endl;

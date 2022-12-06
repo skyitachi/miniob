@@ -50,8 +50,8 @@ public:
   const std::string& name() const;
 
 private:
-  AggrFuncType aggr_func_type_;
   Field field_;
+  AggrFuncType aggr_func_type_;
   TupleCell value_;
   char value_t[4];
   // NOTE: store varchar type value

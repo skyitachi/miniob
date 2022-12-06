@@ -156,6 +156,12 @@ void AggrFunc::init_value()
       value_.set_length(0);
       break;
     }
+    case AttrType::DATES: {
+      memcpy(value_t, &d_int, sizeof(int32_t));
+      value_.set_length(sizeof(int32_t));
+      value_.set_data(value_t);
+      break;
+    }
     default:
       break;
   }

@@ -13,9 +13,12 @@ See the Mulan PSL v2 for more details. */
 //
 
 #include <mutex>
+#include <time.h>
+
 #include "sql/parser/parse.h"
 #include "rc.h"
 #include "common/log/log.h"
+#include "util/util.h"
 
 RC parse(char *st, Query *sqln);
 
@@ -44,14 +47,12 @@ void aggr_init(AggrAttr *aggr_attr, const char* func_name) {
   if (func_name != nullptr) {
     aggr_attr->func_name = strdup(func_name);
   }
-  printf("aggr_attr->func_name: %s, raw func_name: %s\n", aggr_attr->func_name, func_name);
 }
 
 void aggr_attr_init(AggrAttr *aggr_attr, RelAttr* relation_attr, const char* func_name) {
   if (func_name != nullptr) {
     aggr_attr->func_name = strdup(func_name);
   }
-  printf("aggr_attr->func_name: %s, raw func_name: %s\n", aggr_attr->func_name, func_name);
   aggr_attr->rel_attr = relation_attr;
 }
 
@@ -76,6 +77,24 @@ void value_init_string(Value *value, const char *v)
 {
   value->type = CHARS;
   value->data = strdup(v);
+}
+
+int value_init_date(Query* query, Value *value, const char *v) {
+  struct tm tm{};
+  memset(&tm, 0, sizeof(tm));
+  char* ret = strptime(v, "%Y-%m-%d", &tm);
+  value->type = DATES;
+  int result = -1;
+  if (ret != nullptr && validate_date(v)) {
+    time_t epoch = mktime(&tm);
+    result = (int)epoch;
+    value->data = malloc(sizeof(result));
+    memcpy(value->data, &result, sizeof(result));
+    return 0;
+  } else {
+    query->flag = SCF_DATE_ERROR;
+    return -1;
+  }
 }
 void value_destroy(Value *value)
 {
@@ -139,15 +158,10 @@ void selects_append_relation(Selects *selects, const char *relation_name)
   selects->relations[selects->relation_num++] = strdup(relation_name);
 }
 
-// TODO: 这里解析的有问题
 void selects_append_aggr(Selects* selects, AggrAttr *aggr_attr) {
   aggr_attr->rel_attr = &selects->attributes[selects->attr_num - 1];
   selects->aggrs[selects->aggr_num++] = *aggr_attr;
   selects->aggr_func_idx[selects->aggr_num] = selects->attr_num;
-
-  printf("aggr_num: %d, attr_num: %d, idx: %d, aggr_func: %s, attr_name: %s\n",
-      selects->aggr_num, selects->attr_num, selects->aggr_func_idx[selects->aggr_num],
-      aggr_attr->func_name, aggr_attr->rel_attr->attribute_name);
 }
 
 void selects_append_conditions(Selects *selects, Condition conditions[], size_t condition_num)
@@ -432,8 +446,7 @@ extern "C" int sql_parse(const char *st, Query *sqls);
 RC parse(const char *st, Query *sqln)
 {
   sql_parse(st, sqln);
-
-  if (sqln->flag == SCF_ERROR)
+  if (sqln->flag == SCF_ERROR || sqln->flag == SCF_DATE_ERROR)
     return SQL_SYNTAX;
   else
     return SUCCESS;

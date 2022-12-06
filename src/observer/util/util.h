@@ -17,3 +17,5 @@ See the Mulan PSL v2 for more details. */
 #include <string>
 
 std::string double2string(double v);
+std::string timestamp2string(int v);
+bool validate_date(const char* v);

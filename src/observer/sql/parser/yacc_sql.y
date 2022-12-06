@@ -83,6 +83,7 @@ ParserContext *get_context(yyscan_t scanner)
         INT_T
         STRING_T
         FLOAT_T
+        DATE_T
         HELP
         EXIT
         DOT //QUOTE
@@ -118,6 +119,7 @@ ParserContext *get_context(yyscan_t scanner)
 %token <string> ID
 %token <string> PATH
 %token <string> SSS
+%token <string> DATE
 %token <string> STAR
 %token <string> STRING_V
 %token <string> COUNT
@@ -273,6 +275,7 @@ type:
 	INT_T { $$=INTS; }
        | STRING_T { $$=CHARS; }
        | FLOAT_T { $$=FLOATS; }
+       | DATE_T { $$=DATES; }
        ;
 ID_get:
 	ID 
@@ -287,18 +290,18 @@ insert:				/*insert   语句的语法解析树*/
     INSERT INTO ID VALUES LBRACE value value_list RBRACE SEMICOLON 
 		{
 			// CONTEXT->values[CONTEXT->value_length++] = *$6;
-
-			CONTEXT->ssql->flag=SCF_INSERT;//"insert";
-			// CONTEXT->ssql->sstr.insertion.relation_name = $3;
-			// CONTEXT->ssql->sstr.insertion.value_num = CONTEXT->value_length;
-			// for(i = 0; i < CONTEXT->value_length; i++){
-			// 	CONTEXT->ssql->sstr.insertion.values[i] = CONTEXT->values[i];
-      // }
-			inserts_init(&CONTEXT->ssql->sstr.insertion, $3, CONTEXT->values, CONTEXT->value_length);
-
-      //临时变量清零
-      CONTEXT->value_length=0;
-    }
+            if (CONTEXT->ssql->flag != SCF_DATE_ERROR) {
+                CONTEXT->ssql->flag=SCF_INSERT;//"insert";
+                // CONTEXT->ssql->sstr.insertion.relation_name = $3;
+                // CONTEXT->ssql->sstr.insertion.value_num = CONTEXT->value_length;
+                // for(i = 0; i < CONTEXT->value_length; i++){
+                // 	    CONTEXT->ssql->sstr.insertion.values[i] = CONTEXT->values[i];
+                // }
+                inserts_init(&CONTEXT->ssql->sstr.insertion, $3, CONTEXT->values, CONTEXT->value_length);
+                //临时变量清零
+                CONTEXT->value_length=0;
+            }
+        }
 
 value_list:
     /* empty */
@@ -313,48 +316,60 @@ value:
     |FLOAT{
   		value_init_float(&CONTEXT->values[CONTEXT->value_length++], $1);
 		}
+	|DATE {
+	    $1 = substr($1, 1, strlen($1) - 2);
+	    value_init_date(CONTEXT->ssql, &CONTEXT->values[CONTEXT->value_length++], $1);
+	}
     |SSS {
-			$1 = substr($1,1,strlen($1)-2);
+	    $1 = substr($1,1,strlen($1)-2);
   		value_init_string(&CONTEXT->values[CONTEXT->value_length++], $1);
-		}
+    }
     ;
     
 delete:		/*  delete 语句的语法解析树*/
     DELETE FROM ID where SEMICOLON 
 		{
-			CONTEXT->ssql->flag = SCF_DELETE;//"delete";
-			deletes_init_relation(&CONTEXT->ssql->sstr.deletion, $3);
-			deletes_set_conditions(&CONTEXT->ssql->sstr.deletion, 
-					CONTEXT->conditions, CONTEXT->condition_length);
-			CONTEXT->condition_length = 0;	
-    }
+		    if (CONTEXT->ssql->flag != SCF_DATE_ERROR) {
+                CONTEXT->ssql->flag = SCF_DELETE;//"delete";
+                deletes_init_relation(&CONTEXT->ssql->sstr.deletion, $3);
+                deletes_set_conditions(&CONTEXT->ssql->sstr.deletion,
+                        CONTEXT->conditions, CONTEXT->condition_length);
+                CONTEXT->condition_length = 0;
+
+
+		    }
+        }
     ;
 update:			/*  update 语句的语法解析树*/
     UPDATE ID SET ID EQ value where SEMICOLON
 		{
-			CONTEXT->ssql->flag = SCF_UPDATE;//"update";
-			Value *value = &CONTEXT->values[0];
-			updates_init(&CONTEXT->ssql->sstr.update, $2, $4, value, 
-					CONTEXT->conditions, CONTEXT->condition_length);
-			CONTEXT->condition_length = 0;
+		    if (CONTEXT->ssql->flag != SCF_DATE_ERROR) {
+                CONTEXT->ssql->flag = SCF_UPDATE;//"update";
+                Value *value = &CONTEXT->values[0];
+                updates_init(&CONTEXT->ssql->sstr.update, $2, $4, value,
+                        CONTEXT->conditions, CONTEXT->condition_length);
+                CONTEXT->condition_length = 0;
+		    }
 		}
     ;
 select:				/*  select 语句的语法解析树*/
     SELECT select_attr FROM ID rel_list where SEMICOLON
 		{
 			// CONTEXT->ssql->sstr.selection.relations[CONTEXT->from_length++]=$4;
-			selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
+			if (CONTEXT->ssql->flag != SCF_DATE_ERROR) {
+                selects_append_relation(&CONTEXT->ssql->sstr.selection, $4);
 
-			selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
+                selects_append_conditions(&CONTEXT->ssql->sstr.selection, CONTEXT->conditions, CONTEXT->condition_length);
 
-			CONTEXT->ssql->flag=SCF_SELECT;//"select";
-			// CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
+                CONTEXT->ssql->flag=SCF_SELECT;//"select";
+                // CONTEXT->ssql->sstr.selection.attr_num = CONTEXT->select_length;
 
-			//临时变量清零
-			CONTEXT->condition_length=0;
-			CONTEXT->from_length=0;
-			CONTEXT->select_length=0;
-			CONTEXT->value_length = 0;
+                //临时变量清零
+                CONTEXT->condition_length=0;
+                CONTEXT->from_length=0;
+                CONTEXT->select_length=0;
+                CONTEXT->value_length = 0;
+			}
 	}
 	;
 
