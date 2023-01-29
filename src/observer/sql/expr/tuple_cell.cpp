@@ -63,6 +63,18 @@ int TupleCell::compare(const TupleCell &other) const
   } else if (this->attr_type_ == FLOATS && other.attr_type_ == INTS) {
     float other_data = *(int *)other.data_;
     return compare_float(data_, &other_data);
+  } else if (this->attr_type_ == CHARS && other.attr_type_ == INTS) {
+    int32_t new_v = std::atoi(this->data_);
+    return compare_int(&new_v, other.data_);
+  } else if (this->attr_type_ == CHARS && other.attr_type_ == FLOATS) {
+    float new_v = static_cast<float>(std::atof(this->data_));
+    return compare_float(&new_v, other.data_);
+  } else if (this->attr_type_ == INTS && other.attr_type_ == CHARS) {
+    int32_t new_v = std::atoi(other.data_);
+    return compare_int(this->data_, &new_v);
+  } else if (this->attr_type_ == FLOATS && other.attr_type_ == CHARS) {
+    float new_v = static_cast<float>(std::atof(other.data_));
+    return compare_float(this->data_, &new_v);
   }
   LOG_WARN("not supported");
   return -1; // TODO return rc?

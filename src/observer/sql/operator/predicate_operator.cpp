@@ -73,24 +73,13 @@ bool PredicateOperator::do_predicate(RowTuple &tuple)
     TupleCell right_cell;
     auto rc = left_expr->get_value(tuple, left_cell);
     if (rc != SUCCESS) {
-      std::cout << "cannot get left value from left_expr expr\n";
       throw std::exception();
     }
-
     rc = right_expr->get_value(tuple, right_cell);
     if (rc != SUCCESS) {
-      std::cout << "cannot get right value from right expr\n";
       throw std::exception();
     }
-    std::cout << "right expr attr_type: " << right_cell.attr_type() << ", left expr attr_type: " <<
-        left_cell.attr_type() << std::endl;
 
-    if (right_cell.data() == nullptr) {
-      std::cout << "right data is null \n";
-    }
-    if (left_cell.data() == nullptr) {
-      std::cout << "left data is null \n";
-    }
     const int compare = left_cell.compare(right_cell);
     bool filter_result = false;
     switch (comp) {
