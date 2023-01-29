@@ -24,9 +24,8 @@ RC Stmt::create_stmt(Db *db, const Query &query, Stmt *&stmt)
 
   switch (query.flag) {
   case SCF_INSERT: {
-      return InsertStmt::create(db, query.sstr.insertion, stmt);
+      return InsertStmt::create(db, const_cast<Inserts&>(query.sstr.insertion), stmt);
     }
-    break;
   case SCF_DELETE: {
       return DeleteStmt::create(db, query.sstr.deletion, stmt);   
     }

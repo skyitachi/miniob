@@ -34,14 +34,14 @@ std::string double2string(double v)
     len--;
   }
 
-  return std::string(buf, len);
+  return {buf, len};
 }
 
 std::string timestamp2string(int ts) {
   char buf[20];
   auto t = time_t(ts);
   auto len = strftime(buf, 11, "%Y-%m-%d", localtime(&t));
-  return std::string(buf, len);
+  return {buf, len};
 }
 
 bool validate_date(const char *v) {
@@ -73,4 +73,34 @@ bool validate_date(const char *v) {
     return false;
   }
   return true;
+}
+
+bool typecast(Value* v, AttrType dest_type) {
+  if (v->type == AttrType::CHARS && dest_type == AttrType::INTS) {
+    // char -> int
+    int new_value = std::atoi(reinterpret_cast<char *>(v->data));
+    v->type = AttrType::INTS;
+    memcpy(v->data, &new_value, sizeof(int32_t));
+    return true;
+  } else if (v->type == AttrType::INTS && dest_type == AttrType::CHARS) {
+    v->type = AttrType::CHARS;
+    std::string new_value = std::to_string(*reinterpret_cast<int32_t*>(v->data));
+    free(v->data);
+    v->data = malloc(new_value.size() + 1);
+    memcpy(v->data, new_value.data(), new_value.size());
+    char *dptr = reinterpret_cast<char*>(v->data);
+    dptr[new_value.size()] = '\0';
+    return true;
+  } else if (v->type == AttrType::INTS && dest_type == AttrType::FLOATS) {
+    v->type = AttrType::FLOATS;
+    auto new_value = static_cast<float>(*reinterpret_cast<int32_t*>(v->data));
+    memcpy(v->data, &new_value, sizeof(float));
+    return true;
+  } else if (v->type == AttrType::FLOATS && dest_type == AttrType::INTS) {
+    v->type = AttrType::INTS;
+    auto new_value = static_cast<int32_t>(*reinterpret_cast<float*>(v->data));
+    memcpy(v->data, &new_value, sizeof(int32_t));
+    return true;
+  }
+  return false;
 }

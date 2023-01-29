@@ -15,7 +15,10 @@ See the Mulan PSL v2 for more details. */
 #pragma once
 
 #include <string>
+#include "sql/parser/parse_defs.h"
 
 std::string double2string(double v);
 std::string timestamp2string(int v);
 bool validate_date(const char* v);
+
+bool typecast(Value* v, AttrType dest_type);
