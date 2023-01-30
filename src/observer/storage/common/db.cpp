@@ -227,3 +227,29 @@ RC Db::recover()
 CLogManager *Db::get_clog_manager() {
   return clog_manager_;
 }
+
+RC Db::drop_table(const char *table_name)
+{
+  // TODO: table lock
+  auto meta_path = table_meta_file(path_.c_str(), table_name);
+  if (unlink(meta_path.c_str()) != 0) {
+    return RC::FILE_ERROR;
+  }
+  auto data_path = table_data_file(path_.c_str(), table_name);
+  if (unlink(data_path.c_str())) {
+    return RC::FILE_ERROR;
+  }
+  auto* table = find_table(table_name);
+  auto in = table->table_meta().index_num();
+  for (int i = 0; i < in; i++) {
+    auto* idx = table->table_meta().index(i);
+    auto idx_path = table_index_file(path_.c_str(), table_name, idx->name());
+    if (unlink(idx_path.c_str())) {
+      return RC::FILE_ERROR;
+    }
+  }
+  std::string table_name_str = table_name;
+  opened_tables_.erase(table_name);
+  // need update table_meta
+  return RC::SUCCESS;
+}

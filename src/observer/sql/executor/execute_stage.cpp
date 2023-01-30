@@ -170,7 +170,9 @@ void ExecuteStage::handle_request(common::StageEvent *event)
       do_desc_table(sql_event);
     } break;
 
-    case SCF_DROP_TABLE:
+    case SCF_DROP_TABLE: {
+      do_drop_table(sql_event);
+    } break;
     case SCF_DROP_INDEX:
     case SCF_LOAD_DATA: {
       default_storage_stage_->handle_event(event);
@@ -699,5 +701,28 @@ RC ExecuteStage::do_clog_sync(SQLStageEvent *sql_event)
     session_event->set_response("SUCCESS\n");
   }
 
+  return rc;
+}
+
+
+RC ExecuteStage::do_drop_table(SQLStageEvent *sql_event)
+{
+  RC rc = RC::SUCCESS;
+  SessionEvent *session_event = sql_event->session_event();
+  Db *db = session_event->session()->get_current_db();
+  Query *query = sql_event->query();
+  const char *table_name = query->sstr.desc_table.relation_name;
+  Table *table = db->find_table(table_name);
+  std::stringstream ss;
+  if (table != nullptr) {
+    if (db->drop_table(table_name) != RC::SUCCESS) {
+      ss << "FAILURE\n";
+    } else {
+      ss << "SUCCESS\n";
+    }
+  } else {
+    ss << "No such table: " << table_name << std::endl;
+  }
+  sql_event->session_event()->set_response(ss.str().c_str());
   return rc;
 }

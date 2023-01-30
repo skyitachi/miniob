@@ -40,6 +40,8 @@ public:
 
   void all_tables(std::vector<std::string> &table_names) const;
 
+  RC drop_table(const char *table_name);
+
   RC sync();
 
   RC recover();
