@@ -721,7 +721,8 @@ RC ExecuteStage::do_drop_table(SQLStageEvent *sql_event)
       ss << "SUCCESS\n";
     }
   } else {
-    ss << "No such table: " << table_name << std::endl;
+//    ss << "No such table: " << table_name << std::endl;
+    ss << "FAILURE\n";
   }
   sql_event->session_event()->set_response(ss.str().c_str());
   return rc;

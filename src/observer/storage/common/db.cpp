@@ -230,26 +230,18 @@ CLogManager *Db::get_clog_manager() {
 
 RC Db::drop_table(const char *table_name)
 {
-  // TODO: table lock
-  auto meta_path = table_meta_file(path_.c_str(), table_name);
-  if (unlink(meta_path.c_str()) != 0) {
-    return RC::FILE_ERROR;
-  }
-  auto data_path = table_data_file(path_.c_str(), table_name);
-  if (unlink(data_path.c_str())) {
-    return RC::FILE_ERROR;
-  }
-  auto* table = find_table(table_name);
-  auto in = table->table_meta().index_num();
-  for (int i = 0; i < in; i++) {
-    auto* idx = table->table_meta().index(i);
-    auto idx_path = table_index_file(path_.c_str(), table_name, idx->name());
-    if (unlink(idx_path.c_str())) {
-      return RC::FILE_ERROR;
-    }
-  }
+  RC rc;
   std::string table_name_str = table_name;
-  opened_tables_.erase(table_name);
-  // need update table_meta
+  auto it = opened_tables_.find(table_name_str);
+  if (it == opened_tables_.end()) {
+    return RC::SCHEMA_TABLE_NOT_EXIST;
+  }
+  rc = it->second->drop();
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
+  opened_tables_.erase(it);
+  // clear table resource
+  delete it->second;
   return RC::SUCCESS;
 }

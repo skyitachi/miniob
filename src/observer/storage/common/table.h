@@ -74,6 +74,7 @@ public:
   {
     return record_handler_;
   }
+  RC drop();
 
 public:
   const char *name() const;

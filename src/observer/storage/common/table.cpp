@@ -120,6 +120,45 @@ RC Table::create(
   return rc;
 }
 
+RC Table::drop()
+{
+  RC rc = RC::SUCCESS;
+  // flush dirty page
+  if (data_buffer_pool_ != nullptr) {
+    data_buffer_pool_->flush_all_pages();
+  }
+  auto* table_name = table_meta_.name();
+  // sync index & rm
+  for(auto* index: indexes_) {
+    index->sync();
+    auto index_file_path = table_index_file(base_dir_.c_str(), table_name, index->index_meta().name());
+    if (::remove(index_file_path.c_str()) != 0) {
+      return RC::IOERR;
+    }
+  }
+
+  std::string meta_file_path = table_meta_file(base_dir_.c_str(), table_meta_.name());
+
+  // delete meta file
+  if (::remove(meta_file_path.c_str()) != 0) {
+    return RC::IOERR;
+  }
+
+  BufferPoolManager &bpm = BufferPoolManager::instance();
+  auto data_file_path = table_data_file(base_dir_.c_str(), table_name);
+  rc = bpm.close_file(data_file_path.c_str());
+  if (rc != RC::SUCCESS) {
+    return rc;
+  }
+  // delete data file
+  if (::remove(data_file_path.c_str()) != 0) {
+    return RC::IOERR;
+  }
+
+  return RC::SUCCESS;
+}
+
+
 RC Table::open(const char *meta_file, const char *base_dir, CLogManager *clog_manager)
 {
   // 加载元数据文件
