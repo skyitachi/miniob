@@ -680,6 +680,10 @@ RC Table::create_index(Trx *trx, const char *index_name, const char *attribute_n
 RC Table::update_record(Trx *trx, const char *attribute_name, const Value *value, int condition_num,
     const Condition conditions[], int *updated_count)
 {
+  // index, record updates
+  for (int i = 0; i < condition_num; i++) {
+    auto condition = conditions[i];
+  }
   return RC::GENERIC_ERROR;
 }
 
