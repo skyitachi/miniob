@@ -143,7 +143,7 @@ void ExecuteStage::handle_request(common::StageEvent *event)
       do_insert(sql_event);
     } break;
     case StmtType::UPDATE: {
-      //do_update((UpdateStmt *)stmt, session_event);
+      do_update(sql_event);
     } break;
     case StmtType::DELETE: {
       do_delete(sql_event);
@@ -536,6 +536,35 @@ RC ExecuteStage::do_desc_table(SQLStageEvent *sql_event)
   }
   sql_event->session_event()->set_response(ss.str().c_str());
   return RC::SUCCESS;
+}
+
+RC ExecuteStage::do_update(SQLStageEvent *sql_event)
+{
+  Stmt* stmt = sql_event->stmt();
+  SessionEvent* session_event = sql_event->session_event();
+  Session *session = session_event->session();
+  Db *db = session->get_current_db();
+  Trx *trx = session->current_trx();
+  CLogManager *clog_manager = db->get_clog_manager();
+
+  if (stmt == nullptr) {
+    LOG_WARN("cannot find statement");
+    return RC::GENERIC_ERROR;
+  }
+
+  auto* update_stmt = reinterpret_cast<UpdateStmt*>(stmt);
+  Table *table = update_stmt->table();
+
+  auto updates = update_stmt->updates();
+  int updated_count = 0;
+  RC rc = table->update_record(trx, updates.attribute_name, &updates.value,
+      updates.condition_num, updates.conditions, &updated_count);
+
+  if (rc != RC::SUCCESS) {
+    LOG_WARN("update record failed");
+    session_event->set_response("FAILURE\n");
+    return RC::GENERIC_ERROR;
+  }
 }
 
 RC ExecuteStage::do_insert(SQLStageEvent *sql_event)
